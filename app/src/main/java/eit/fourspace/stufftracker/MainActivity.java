@@ -9,6 +9,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.LifecycleOwner;
 
 import android.Manifest;
@@ -28,12 +29,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 
 public class MainActivity extends AppCompatActivity implements LifecycleOwner {
-    private static final int REQUEST_CODE_CAMERA_PERM = 10;
+    private static final int REQUEST_CODE_PERM = 10;
     private static final String[] REQUIRED_PERMS = {Manifest.permission.CAMERA};
 
     private PreviewView cameraView;
     private OverlayDrawable canvas;
     private ProcessCameraProvider provider;
+
+    private SensorHandler sensorFragment;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,8 +49,10 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
 
         if (allPermissionsGranted()) {
             cameraView.post(this::startCamera);
+            sensorFragment = new SensorHandler();
+            getSupportFragmentManager().beginTransaction().add(sensorFragment, "sensorFragment").commit();
         } else {
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMS, REQUEST_CODE_CAMERA_PERM);
+            ActivityCompat.requestPermissions(this, REQUIRED_PERMS, REQUEST_CODE_PERM);
         }
 
 
@@ -69,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
                         }, 3000);
                     }
                 });
+
     }
 
 
@@ -109,9 +115,11 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_CODE_CAMERA_PERM) {
+        if (requestCode == REQUEST_CODE_PERM) {
             if (allPermissionsGranted()) {
                 cameraView.post(this::startCamera);
+                sensorFragment = new SensorHandler();
+                getSupportFragmentManager().beginTransaction().add(sensorFragment, "sensorFragment").commit();
             } else {
                 Toast.makeText(this,"Camera permissions not granted by user", Toast.LENGTH_SHORT).show();
                 finish();
