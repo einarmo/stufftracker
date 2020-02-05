@@ -3,4 +3,8 @@
     <item type="id" name="camera_view" />
     <item type="id" name="canvas_view" />
     <item type="id" name="sensor_fragment" />
+    <item type="id" name="camera_container" />
+    <item type="id" name="nav_container" />
+    <item type="id" name="camera_fragment" />
+    <item type="id" name="nav_graph" />
 </resources>

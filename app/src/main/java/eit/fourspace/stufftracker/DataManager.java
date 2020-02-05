@@ -3,7 +3,9 @@ package eit.fourspace.stufftracker;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -26,21 +28,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import androidx.fragment.app.Fragment;
-
-public class DataManager extends Fragment {
+public class DataManager {
     private static final String TAG = "DataManager";
     private JSONArray rawData;
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Context context = getActivity();
+    public static final int TLE_DATA_NOT_AVAILABLE = 10;
+    public static final int TLE_DATA_READY = 11;
+
+    public DataManager(Context context, Handler asyncMessageHandler) {
         if (context == null) {
             Log.e(TAG, "Context may not be null");
             return;
         }
         AsyncTask.execute(() -> {
-            Looper.prepare();
             String res = readJsonFromFile(context);
             boolean getNew = false;
             if (res != null && !res.equals("")) {
@@ -57,12 +56,15 @@ public class DataManager extends Fragment {
             if (getNew) {
                 JSONArray data = retrieveTLEData(context);
                 if (data == null) {
-                    Toast.makeText(context, "Unable to get tle data from anywhere", Toast.LENGTH_SHORT).show();
+                    Message msg = asyncMessageHandler.obtainMessage(TLE_DATA_NOT_AVAILABLE);
+                    msg.sendToTarget();
                     return;
                 }
                 rawData = data;
                 dumpToFile(data.toString(), context);
             }
+            Message msg = asyncMessageHandler.obtainMessage(TLE_DATA_READY);
+            msg.sendToTarget();
         });
     }
 

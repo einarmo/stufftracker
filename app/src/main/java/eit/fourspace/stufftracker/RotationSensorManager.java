@@ -5,27 +5,18 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Bundle;
-import android.util.Log;
 
-import androidx.fragment.app.Fragment;
-
-public class SensorHandler extends Fragment implements SensorEventListener {
-    private SensorManager sensorManager;
+public class RotationSensorManager implements SensorEventListener {
     private final float[] gravityReading = new float[3];
     private final float[] magnetometerReading = new float[3];
-    private static final String TAG = "SensorHandler";
 
-    @Override
+    SensorManager sensorManager;
+
     public void onPause() {
-        super.onPause();
         sensorManager.unregisterListener(this);
     }
 
-    @Override
     public void onResume() {
-        super.onResume();
-        // Try to get gravity, use pure accelerometer as backup
         Sensor gravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
         if (gravity == null) {
             gravity = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -39,18 +30,8 @@ public class SensorHandler extends Fragment implements SensorEventListener {
         }
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
-        Log.println(Log.WARN, TAG, "Create sensor handler fragment");
-    }
-    private String printMatrix(float[] data) {
-        String fin = "[";
-        for (int i = 0; i < 3; i++) {
-            fin += String.valueOf(data[i]) + (i == 2 ? "]" : ", ");
-        }
-        return fin;
+    RotationSensorManager(Context context) {
+        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
     }
 
     @Override
@@ -64,7 +45,7 @@ public class SensorHandler extends Fragment implements SensorEventListener {
                 System.arraycopy(event.values, 0, magnetometerReading, 0, magnetometerReading.length);
             }
         }
-        // Log.println(Log.WARN, TAG, printMatrix(event.values));
+        // Log.println(Log.WARN, TAG, "Receive sensor event");
     }
 
     @Override
@@ -75,6 +56,6 @@ public class SensorHandler extends Fragment implements SensorEventListener {
     public synchronized void getRotationMatrix(float[] target) {
         if (target.length != 9) throw new IllegalArgumentException();
 
-        SensorManager.getRotationMatrix(target, null, gravityReading, magnetometerReading);
+        android.hardware.SensorManager.getRotationMatrix(target, null, gravityReading, magnetometerReading);
     }
 }
