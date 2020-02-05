@@ -16,6 +16,7 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.ContactsContract;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -29,14 +30,15 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 
 public class MainActivity extends AppCompatActivity implements LifecycleOwner {
-    private static final int REQUEST_CODE_PERM = 10;
-    private static final String[] REQUIRED_PERMS = {Manifest.permission.CAMERA};
+    private static final int REQUEST_CODE_PERM = 11;
+    private static final String[] REQUIRED_PERMS = {Manifest.permission.CAMERA, Manifest.permission.INTERNET, Manifest.permission.ACCESS_NETWORK_STATE};
 
     private PreviewView cameraView;
     private OverlayDrawable canvas;
     private ProcessCameraProvider provider;
 
     private SensorHandler sensorFragment;
+    private DataManager dataFragment;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,9 +50,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
         cameraView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
 
         if (allPermissionsGranted()) {
-            cameraView.post(this::startCamera);
-            sensorFragment = new SensorHandler();
-            getSupportFragmentManager().beginTransaction().add(sensorFragment, "sensorFragment").commit();
+            startActivityProcesses();
         } else {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMS, REQUEST_CODE_PERM);
         }
@@ -75,6 +75,16 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
                     }
                 });
 
+    }
+
+    private void startActivityProcesses() {
+        cameraView.post(this::startCamera);
+        sensorFragment = new SensorHandler();
+        dataFragment = new DataManager();
+        getSupportFragmentManager().beginTransaction()
+                .add(sensorFragment, "sensorFragment")
+                .add(dataFragment, "dataFragment")
+                .commit();
     }
 
 
@@ -117,17 +127,16 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CODE_PERM) {
             if (allPermissionsGranted()) {
-                cameraView.post(this::startCamera);
-                sensorFragment = new SensorHandler();
-                getSupportFragmentManager().beginTransaction().add(sensorFragment, "sensorFragment").commit();
+                startActivityProcesses();
             } else {
-                Toast.makeText(this,"Camera permissions not granted by user", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,"Permissions not granted by user", Toast.LENGTH_SHORT).show();
                 finish();
             }
         }
     }
     private boolean allPermissionsGranted() {
         for (String perm : REQUIRED_PERMS) {
+            Log.w("Main", perm + ", " + String.valueOf(ContextCompat.checkSelfPermission(getBaseContext(), perm)));
             if (ContextCompat.checkSelfPermission(getBaseContext(), perm) != PackageManager.PERMISSION_GRANTED) return false;
         }
         return true;
