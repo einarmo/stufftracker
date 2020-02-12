@@ -3,6 +3,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 import android.util.DisplayMetrics;
@@ -15,7 +16,9 @@ import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.time.Duration;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
 import androidx.camera.core.AspectRatio;
@@ -28,6 +31,9 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.navigation.Navigation;
+import androidx.work.Data;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 public class CameraFragment extends Fragment {
     private PreviewView cameraView;
@@ -39,6 +45,9 @@ public class CameraFragment extends Fragment {
     private Handler asyncMessageHandler;
 
     private static final String TAG = "CameraFragment";
+
+    private HandlerThread tleWorkerThread;
+    private Handler tleWorker;
 
     private Executor mainExecutor;
     @Override
@@ -82,8 +91,25 @@ public class CameraFragment extends Fragment {
                 }
             }
         };
-        dataManager = new DataManager(requireContext(), asyncMessageHandler);
 
+        dataManager = new DataManager(requireContext(), asyncMessageHandler);
+        tleWorkerThread = new HandlerThread("TLEWorker", 5);
+        tleWorkerThread.start();
+        tleWorker = new Handler(tleWorkerThread.getLooper());
+
+        tleWorker.postDelayed(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        if (dataManager.initialized) {
+                            dataManager.propogateTLEs();
+                            dataManager.refreshPositions();
+                            Log.w(TAG, dataManager.getPositions()[0].toString());
+                        }
+
+                        tleWorker.postDelayed(this, 1000);
+                    }
+                },1000);
     }
 
     @Override
@@ -141,7 +167,7 @@ public class CameraFragment extends Fragment {
                     .setTargetAspectRatio(screenAspectRatio)
                     .setTargetRotation(rotation)
                     .build();
-            preview.setPreviewSurfaceProvider(cameraView.getPreviewSurfaceProvider());
+            preview.setSurfaceProvider(cameraView.getPreviewSurfaceProvider());
             try {
                 provider = providerFuture.get();
             }

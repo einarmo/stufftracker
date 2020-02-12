@@ -2,12 +2,9 @@ package eit.fourspace.stufftracker;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -15,8 +12,15 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.RequestFuture;
 import com.android.volley.toolbox.Volley;
 
+import org.hipparchus.geometry.euclidean.threed.Vector3D;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
+import org.orekit.propagation.analytical.tle.TLE;
+import org.orekit.propagation.analytical.tle.TLEPropagator;
+import org.orekit.time.AbsoluteDate;
+import org.orekit.time.TimeScalesFactory;
+import org.orekit.utils.PVCoordinates;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -24,15 +28,31 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public class DataManager {
     private static final String TAG = "DataManager";
     private JSONArray rawData;
     public static final int TLE_DATA_NOT_AVAILABLE = 10;
     public static final int TLE_DATA_READY = 11;
+
+    private TLEPropagator[] propagators;
+    private PVCoordinates[] currentCoordinates;
+    private Vector3D[] currentVectors;
+
+    public boolean initialized;
 
     public DataManager(Context context, Handler asyncMessageHandler) {
         if (context == null) {
@@ -63,14 +83,16 @@ public class DataManager {
                 rawData = data;
                 dumpToFile(data.toString(), context);
             }
+            initTLEs();
             Message msg = asyncMessageHandler.obtainMessage(TLE_DATA_READY);
             msg.sendToTarget();
+            initialized = true;
         });
     }
 
     private JSONArray retrieveTLEData(Context context) {
         RequestQueue queue = Volley.newRequestQueue(context);
-        String url = "https://folk.ntnu.no/magnuhr/tle_test.json";
+        String url = "https://folk.ntnu.no/magnuhr/tleonly_all.json";
 
         RequestFuture<JSONArray> future = RequestFuture.newFuture();
         JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, new JSONArray(), future, future);
@@ -86,7 +108,7 @@ public class DataManager {
 
     private void dumpToFile(String json, Context context) {
         try {
-            OutputStreamWriter writer = new OutputStreamWriter(context.openFileOutput("tle.json", Context.MODE_PRIVATE));
+            OutputStreamWriter writer = new OutputStreamWriter(context.openFileOutput("tle_all.json", Context.MODE_PRIVATE));
             writer.write(json);
             writer.flush();
             writer.close();
@@ -104,7 +126,7 @@ public class DataManager {
         String ret = "";
 
         try {
-            InputStream inputStream = context.openFileInput("tle.json");
+            InputStream inputStream = context.openFileInput("tle_all.json");
 
             if ( inputStream != null ) {
                 InputStreamReader input = new InputStreamReader(inputStream);
@@ -130,5 +152,49 @@ public class DataManager {
         }
         Log.w(TAG, "Successfully read json data from file: " + ret);
         return ret;
+    }
+
+    private void initTLEs() {
+        ArrayList<TLE> parsedTLEs = new ArrayList<>();
+        for (int i = 0; i < rawData.length(); i++) {
+            try {
+                JSONObject obj = rawData.getJSONObject(i);
+                parsedTLEs.add(new TLE((String)obj.get("TLE_LINE1"), (String)obj.get("TLE_LINE2")));
+            }
+            catch (Exception ex) {
+                Log.w(TAG, "Failed to parse TLE data, line " + i);
+            }
+        }
+
+        propagators = new TLEPropagator[parsedTLEs.size()];
+        currentCoordinates = new PVCoordinates[parsedTLEs.size()];
+        currentVectors = new Vector3D[parsedTLEs.size()];
+        for (int i = 0; i < parsedTLEs.size(); i++) {
+            try {
+                JSONObject obj = rawData.getJSONObject(i);
+
+                propagators[i] = TLEPropagator.selectExtrapolator(parsedTLEs.get(i));
+                currentCoordinates[i] = new PVCoordinates();
+                currentVectors[i] = new Vector3D(0, 0, 0);
+                propagators[i].propagate(new AbsoluteDate(new Date(), TimeScalesFactory.getUTC()));
+            }
+            catch (JSONException ex) {
+                Log.e(TAG, ex.getMessage() + ": failed to parse json TLE data");
+            }
+        }
+    }
+    public void propogateTLEs() {
+        AbsoluteDate current = new AbsoluteDate(new Date(), TimeScalesFactory.getUTC());
+        for (int i = 0; i < propagators.length; i++) {
+            currentCoordinates[i] = propagators[i].getPVCoordinates(current);
+        }
+    }
+    public synchronized void refreshPositions() {
+        for (int i = 0; i < currentCoordinates.length; i++) {
+            currentVectors[i] = currentCoordinates[i].getPosition();
+        }
+    }
+    public synchronized Vector3D[] getPositions() {
+        return currentVectors.clone();
     }
 }
