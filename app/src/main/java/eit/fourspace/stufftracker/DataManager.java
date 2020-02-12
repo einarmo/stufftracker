@@ -29,18 +29,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 public class DataManager {
     private static final String TAG = "DataManager";
@@ -52,9 +44,9 @@ public class DataManager {
     private PVCoordinates[] currentCoordinates;
     private Vector3D[] currentVectors;
 
-    public boolean initialized;
+    boolean initialized;
 
-    public DataManager(Context context, Handler asyncMessageHandler) {
+    DataManager(Context context, Handler asyncMessageHandler) {
         if (context == null) {
             Log.e(TAG, "Context may not be null");
             return;
@@ -183,18 +175,18 @@ public class DataManager {
             }
         }
     }
-    public void propogateTLEs() {
+    void propogateTLEs() {
         AbsoluteDate current = new AbsoluteDate(new Date(), TimeScalesFactory.getUTC());
         for (int i = 0; i < propagators.length; i++) {
             currentCoordinates[i] = propagators[i].getPVCoordinates(current);
         }
     }
-    public synchronized void refreshPositions() {
+    synchronized void refreshPositions() {
         for (int i = 0; i < currentCoordinates.length; i++) {
             currentVectors[i] = currentCoordinates[i].getPosition();
         }
     }
-    public synchronized Vector3D[] getPositions() {
+    synchronized Vector3D[] getPositions() {
         return currentVectors.clone();
     }
 }

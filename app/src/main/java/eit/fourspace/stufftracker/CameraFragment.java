@@ -16,9 +16,7 @@ import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.time.Duration;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
 import androidx.camera.core.AspectRatio;
@@ -31,23 +29,23 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.navigation.Navigation;
-import androidx.work.Data;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
+
 
 public class CameraFragment extends Fragment {
     private PreviewView cameraView;
     private OverlayDrawable canvas;
     private ProcessCameraProvider provider;
     private DataManager dataManager;
+    private TLEManager tleManager;
+
     private RotationSensorManager sensorManager;
+    private LocationManager locationManager;
 
     private Handler asyncMessageHandler;
 
     private static final String TAG = "CameraFragment";
 
-    private HandlerThread tleWorkerThread;
-    private Handler tleWorker;
+
 
     private Executor mainExecutor;
     @Override
@@ -62,12 +60,16 @@ public class CameraFragment extends Fragment {
             return;
         }
         sensorManager.onResume();
+        tleManager.onResume();
+        locationManager.onResume();
     }
 
     @Override
     public void onPause() {
         super.onPause();
         sensorManager.onPause();
+        tleManager.onPause();
+        locationManager.onPause();
     }
 
     @Override
@@ -93,23 +95,8 @@ public class CameraFragment extends Fragment {
         };
 
         dataManager = new DataManager(requireContext(), asyncMessageHandler);
-        tleWorkerThread = new HandlerThread("TLEWorker", 5);
-        tleWorkerThread.start();
-        tleWorker = new Handler(tleWorkerThread.getLooper());
-
-        tleWorker.postDelayed(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        if (dataManager.initialized) {
-                            dataManager.propogateTLEs();
-                            dataManager.refreshPositions();
-                            Log.w(TAG, dataManager.getPositions()[0].toString());
-                        }
-
-                        tleWorker.postDelayed(this, 1000);
-                    }
-                },1000);
+        locationManager = new LocationManager(requireContext(), dataManager);
+        tleManager = new TLEManager(requireContext(), dataManager);
     }
 
     @Override

@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
-import org.orekit.data.DataProvider;
 import org.orekit.data.DataProvidersManager;
 import org.orekit.data.ZipJarCrawler;
 
@@ -17,7 +16,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
