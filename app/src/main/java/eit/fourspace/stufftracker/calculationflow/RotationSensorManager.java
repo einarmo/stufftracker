@@ -1,4 +1,4 @@
-package eit.fourspace.stufftracker;
+package eit.fourspace.stufftracker.calculationflow;
 
 import android.content.Context;
 import android.hardware.Sensor;
@@ -16,11 +16,11 @@ public class RotationSensorManager implements SensorEventListener {
 
     private boolean changedSinceLast = true;
 
-    void onPause() {
+    public void onPause() {
         sensorManager.unregisterListener(this);
     }
 
-    void onResume() {
+    public void onResume() {
         Sensor gravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
         if (gravity == null) {
             gravity = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -34,7 +34,7 @@ public class RotationSensorManager implements SensorEventListener {
         }
     }
 
-    RotationSensorManager(Context context) {
+    public RotationSensorManager(Context context) {
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
     }
 

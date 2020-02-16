@@ -3,11 +3,9 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +27,11 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.navigation.Navigation;
+import eit.fourspace.stufftracker.calculationflow.DataManager;
+import eit.fourspace.stufftracker.calculationflow.ItemRenderer;
+import eit.fourspace.stufftracker.calculationflow.LocationManager;
+import eit.fourspace.stufftracker.calculationflow.RotationSensorManager;
+import eit.fourspace.stufftracker.calculationflow.TLEManager;
 
 
 public class CameraFragment extends Fragment {
@@ -37,6 +40,7 @@ public class CameraFragment extends Fragment {
     private ProcessCameraProvider provider;
     private DataManager dataManager;
     private TLEManager tleManager;
+    private ItemRenderer itemRenderer;
 
     private RotationSensorManager sensorManager;
     private LocationManager locationManager;
@@ -44,8 +48,6 @@ public class CameraFragment extends Fragment {
     private Handler asyncMessageHandler;
 
     private static final String TAG = "CameraFragment";
-
-
 
     private Executor mainExecutor;
     @Override
@@ -62,6 +64,7 @@ public class CameraFragment extends Fragment {
         sensorManager.onResume();
         tleManager.onResume();
         locationManager.onResume();
+        itemRenderer.onResume();
     }
 
     @Override
@@ -70,6 +73,7 @@ public class CameraFragment extends Fragment {
         sensorManager.onPause();
         tleManager.onPause();
         locationManager.onPause();
+        itemRenderer.onPause();
     }
 
     @Override
@@ -95,18 +99,20 @@ public class CameraFragment extends Fragment {
         };
 
         dataManager = new DataManager(requireContext(), asyncMessageHandler);
-        locationManager = new LocationManager(requireContext(), dataManager);
-        tleManager = new TLEManager(requireContext(), dataManager);
+        locationManager = new LocationManager(requireContext());
+        tleManager = new TLEManager(requireContext(), dataManager, locationManager);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.camera_fragment, container, false);
+        View view = inflater.inflate(R.layout.camera_fragment, container, false);
+        itemRenderer = new ItemRenderer(requireContext(), tleManager, sensorManager, view.findViewById(R.id.canvas_view));
+        return view;
     }
 
     @Override
-    public void onConfigurationChanged(Configuration newconf) {
-        super.onConfigurationChanged(newconf);
+    public void onConfigurationChanged(@NonNull Configuration config) {
+        super.onConfigurationChanged(config);
     }
 
     @Override
@@ -115,28 +121,12 @@ public class CameraFragment extends Fragment {
 
         ConstraintLayout container = (ConstraintLayout)view;
 
-        canvas = new OverlayDrawable();
+        canvas = new OverlayDrawable(itemRenderer);
         ImageView image = container.findViewById(R.id.canvas_view);
         image.setImageDrawable(canvas);
 
         cameraView = container.findViewById(R.id.camera_view);
         cameraView.post(this::startCamera);
-
-        image.setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-
-        image.setOnSystemUiVisibilityChangeListener
-                (visibility -> {
-                    // If we're no longer in fullscreen, wait three seconds, then re-enter fullscreen.
-                    // Trust me it looks real neat.
-                    if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-                        Log.println(Log.VERBOSE, "CameraFragment", "Exit fullscreen!");
-                        Handler handler = new Handler();
-                        handler.postDelayed(() -> {
-                            cameraView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-                            image.setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-                        }, 3000);
-                    }
-                });
     }
 
     private void startCamera() {
@@ -155,6 +145,7 @@ public class CameraFragment extends Fragment {
                     .setTargetRotation(rotation)
                     .build();
             preview.setSurfaceProvider(cameraView.getPreviewSurfaceProvider());
+
             try {
                 provider = providerFuture.get();
             }

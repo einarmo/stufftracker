@@ -1,4 +1,4 @@
-package eit.fourspace.stufftracker;
+package eit.fourspace.stufftracker.calculationflow;
 
 import android.content.Context;
 import android.location.Location;
@@ -14,8 +14,6 @@ import com.google.android.gms.location.LocationServices;
 public class LocationManager {
     private static final String TAG = "LocationManager";
 
-    private DataManager manager;
-
     private FusedLocationProviderClient locationClient;
     private HandlerThread handlerThread;
     private LocationRequest request = new LocationRequest();
@@ -29,18 +27,15 @@ public class LocationManager {
             Log.w(TAG, location.toString());
         }
     };
-    LocationManager(Context context, DataManager manager) {
+    public LocationManager(Context context) {
         locationClient = LocationServices.getFusedLocationProviderClient(context);
         handlerThread = new HandlerThread("LocationUpdateHandler", 5);
-        this.manager = manager;
     }
 
-    void onResume() {
+    public void onResume() {
         locationClient.requestLocationUpdates(request, callback, handlerThread.getLooper());
     }
-    void onPause() {
+    public void onPause() {
         locationClient.removeLocationUpdates(callback);
     }
-
-
 }

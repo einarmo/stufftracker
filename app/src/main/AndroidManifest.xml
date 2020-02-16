@@ -18,7 +18,7 @@
         <activity android:name=".MainActivity"
             android:screenOrientation="fullUser"
             android:rotationAnimation="seamless"
-            android:configChanges="orientation|keyboardHidden">
+            android:configChanges="orientation|keyboardHidden|screenSize">
 
 
             <intent-filter>
