@@ -17,6 +17,11 @@ public class LocationManager {
     private FusedLocationProviderClient locationClient;
     private HandlerThread handlerThread;
     private LocationRequest request = new LocationRequest();
+    private final double[] locationVector = new double[3];
+
+    private boolean changed = false;
+
+    private final LocationManager self = this;
     private LocationCallback callback = new LocationCallback() {
         @Override
         public void onLocationResult(LocationResult locationResult) {
@@ -24,6 +29,13 @@ public class LocationManager {
                 return;
             }
             Location location = locationResult.getLastLocation();
+            synchronized (self) {
+                locationVector[0] = location.getLatitude();
+                locationVector[1] = location.getLongitude();
+                locationVector[2] = location.getAltitude();
+            }
+            changed = true;
+
             Log.w(TAG, location.toString());
         }
     };
@@ -37,5 +49,10 @@ public class LocationManager {
     }
     public void onPause() {
         locationClient.removeLocationUpdates(callback);
+    }
+    synchronized void getLocation(double[] loc) {
+        if (!changed) return;
+        changed = false;
+        System.arraycopy(locationVector, 0, loc, 0, 3);
     }
 }

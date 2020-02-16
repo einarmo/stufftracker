@@ -64,7 +64,8 @@ public class RotationSensorManager implements SensorEventListener {
         android.hardware.SensorManager.getRotationMatrix(localMatrix, null, gravityReading, magnetometerReading);
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                res.setEntry(i, j, localMatrix[i*3 + j]);
+                // Intentionally insert them transposed
+                res.setEntry(j, i, localMatrix[i*3 + j]);
             }
         }
         changedSinceLast = false;

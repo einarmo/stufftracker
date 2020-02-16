@@ -7,8 +7,10 @@ import org.jetbrains.annotations.NotNull;
 public class ObjectWrapper {
     public final String name;
     public final ObjectClass objectClass;
-    // Relative position after all rotations
+    // Relative position in Topocentric Frame
     public Vector3D position;
+    // Relative position in android rotated frame
+    public Vector3D rotatedPosition;
 
     public Vector2D projection;
     public int size; // Size on screen, based on distance (don't know if we will be using this).
@@ -47,6 +49,7 @@ public class ObjectWrapper {
         filtered = false;
         position = new Vector3D(0, 0, 0);
         projection = new Vector2D(0, 0);
+        rotatedPosition = new Vector3D(0, 0, 0);
     }
     @NotNull
     @Override

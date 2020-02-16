@@ -16,10 +16,15 @@ import org.hipparchus.geometry.euclidean.threed.Vector3D;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.orekit.bodies.OneAxisEllipsoid;
+import org.orekit.frames.Frame;
+import org.orekit.frames.FramesFactory;
+import org.orekit.frames.Transform;
 import org.orekit.propagation.analytical.tle.TLE;
 import org.orekit.propagation.analytical.tle.TLEPropagator;
 import org.orekit.time.AbsoluteDate;
 import org.orekit.time.TimeScalesFactory;
+import org.orekit.utils.IERSConventions;
 import org.orekit.utils.PVCoordinates;
 
 import java.io.BufferedReader;
@@ -48,9 +53,14 @@ public class DataManager {
     private Vector3D[] currentVectors;
     ArrayList<ObjectWrapper> objects = new ArrayList<>();
 
+    // Reference frame used by TLEs according to celestrak
+    private Frame TEME;
+    // International Terrestrial Reference Frame. Apparently extremely accurate.
+    Frame ITRF;
+
     boolean initialized;
 
-    public DataManager(Context context, Handler asyncMessageHandler) {
+    DataManager(Context context, Handler asyncMessageHandler) {
         if (context == null) {
             Log.e(TAG, "Context may not be null");
             return;
@@ -146,7 +156,6 @@ public class DataManager {
             Log.e(TAG, e.getMessage() + ": failed to read from json file");
             return null;
         }
-        Log.w(TAG, "Successfully read json data from file: " + ret);
         return ret;
     }
 
@@ -173,12 +182,16 @@ public class DataManager {
             currentCoordinates[i] = new PVCoordinates();
             currentVectors[i] = new Vector3D(0, 0, 0);
         }
+        ITRF = FramesFactory.getITRF(IERSConventions.IERS_2010, true);
+        TEME = FramesFactory.getTEME();
+
     }
     void propagateTLEs() {
         AbsoluteDate current = new AbsoluteDate(new Date(), TimeScalesFactory.getUTC());
         if (tleItCount++ % TLE_SIM_COUNT == 0) {
+            Transform tf = TEME.getTransformTo(ITRF, current);
             for (int i = 0; i < propagators.length; i++) {
-                currentCoordinates[i] = propagators[i].getPVCoordinates(current);
+                currentCoordinates[i] = tf.transformPVCoordinates(propagators[i].getPVCoordinates(current));
             }
         } else {
             for (int i = 0; i < currentCoordinates.length; i++) {
@@ -197,6 +210,7 @@ public class DataManager {
 
     }
     synchronized void refreshPositions() {
+
         for (int i = 0; i < currentCoordinates.length; i++) {
             currentVectors[i] = currentCoordinates[i].getPosition();
         }

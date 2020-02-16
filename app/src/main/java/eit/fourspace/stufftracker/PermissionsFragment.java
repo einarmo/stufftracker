@@ -39,7 +39,6 @@ public class PermissionsFragment extends Fragment {
             Navigation.findNavController(requireActivity(), R.id.nav_container).navigate(
                     PermissionsFragmentDirections.actionPermissionsFragmentToCameraFragment());
         }
-        DataProvidersManager manager = DataProvidersManager.getInstance();
         setupOrekitResource();
     }
 

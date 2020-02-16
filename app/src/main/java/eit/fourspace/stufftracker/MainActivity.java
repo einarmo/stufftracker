@@ -2,15 +2,17 @@ package eit.fourspace.stufftracker;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ViewModelProvider;
+import eit.fourspace.stufftracker.calculationflow.ObjectDataModel;
+
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 
 public class MainActivity extends AppCompatActivity implements LifecycleOwner {
     private FrameLayout container;
+    private ObjectDataModel dataModel;
 
     private static final int FLAGS_FULLSCREEN =
             View.SYSTEM_UI_FLAG_LOW_PROFILE
@@ -26,6 +28,8 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
         //getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_main);
         container = findViewById(R.id.nav_container);
+
+        dataModel = new ViewModelProvider(this).get(ObjectDataModel.class);
     }
 
     @Override

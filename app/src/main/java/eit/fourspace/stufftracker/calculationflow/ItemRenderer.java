@@ -3,10 +3,15 @@ package eit.fourspace.stufftracker.calculationflow;
 import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 import android.view.View;
 
+import org.hipparchus.geometry.euclidean.threed.Rotation;
+import org.hipparchus.geometry.euclidean.twod.Vector2D;
 import org.hipparchus.linear.Array2DRowRealMatrix;
 import org.hipparchus.linear.RealMatrix;
+import org.orekit.frames.Transform;
+import org.orekit.time.AbsoluteDate;
 
 import java.util.ArrayList;
 
@@ -17,7 +22,7 @@ public class ItemRenderer {
 
     private static final String TAG = "ItemRenderer";
 
-    private RealMatrix rotationMatrix = new Array2DRowRealMatrix(4, 4);
+    private Array2DRowRealMatrix rotationMatrix = new Array2DRowRealMatrix(3, 3);
 
     private Handler renderWorker;
 
@@ -39,12 +44,23 @@ public class ItemRenderer {
             if (objects.size() == 0) return;
 
             rotationManager.getRotationMatrix(rotationMatrix);
+            Transform tf = new Transform(AbsoluteDate.JAVA_EPOCH, new Rotation(rotationMatrix.getData(), 1e-4));
 
-            objects.get(0).visible = true;
+            for (int i = 0; i < objects.size(); i++) {
+                ObjectWrapper obj = objects.get(i);
+                if (!obj.visible) continue;
+                obj.rotatedPosition = tf.transformPosition(obj.position);
+                obj.visible = obj.rotatedPosition.getZ() < 0;
+            }
+
+            // Log.w(TAG, objects.get(0).rotatedPosition.toString() + ", " + objects.get(0).visible);
+
+
+            /*objects.get(0).visible = true;
             objects.get(0).filtered = false;
-            // objects.get(0).projection = new Vector2D(cnt % 500, cnt % 500);
+            objects.get(0).projection = new Vector2D(cnt % 500, cnt % 500);
             cnt++;
-            canvasView.invalidate();
+            canvasView.invalidate();*/
         }
     };
 

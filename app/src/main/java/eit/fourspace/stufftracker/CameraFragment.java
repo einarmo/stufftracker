@@ -26,10 +26,11 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
-import eit.fourspace.stufftracker.calculationflow.DataManager;
 import eit.fourspace.stufftracker.calculationflow.ItemRenderer;
 import eit.fourspace.stufftracker.calculationflow.LocationManager;
+import eit.fourspace.stufftracker.calculationflow.ObjectDataModel;
 import eit.fourspace.stufftracker.calculationflow.RotationSensorManager;
 import eit.fourspace.stufftracker.calculationflow.TLEManager;
 
@@ -38,7 +39,6 @@ public class CameraFragment extends Fragment {
     private PreviewView cameraView;
     private OverlayDrawable canvas;
     private ProcessCameraProvider provider;
-    private DataManager dataManager;
     private TLEManager tleManager;
     private ItemRenderer itemRenderer;
 
@@ -81,26 +81,8 @@ public class CameraFragment extends Fragment {
         super.onCreate(savedInstanceState);
         mainExecutor = ContextCompat.getMainExecutor(requireContext());
         sensorManager = new RotationSensorManager(requireContext());
-        Context context = requireContext();
-        asyncMessageHandler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(@NonNull Message message) {
-                switch(message.what) {
-                    case DataManager.TLE_DATA_NOT_AVAILABLE:
-                        Toast.makeText(context, "Unable to retrieve TLE data", Toast.LENGTH_LONG).show();
-                        break;
-                    case DataManager.TLE_DATA_READY:
-                        Toast.makeText(context, "TLE data ready to use", Toast.LENGTH_LONG).show();
-                        break;
-                    default:
-                        super.handleMessage(message);
-                }
-            }
-        };
-
-        dataManager = new DataManager(requireContext(), asyncMessageHandler);
         locationManager = new LocationManager(requireContext());
-        tleManager = new TLEManager(requireContext(), dataManager, locationManager);
+        tleManager = new TLEManager(requireContext(), new ViewModelProvider(requireActivity()).get(ObjectDataModel.class).getDataManager().getValue(), locationManager);
     }
 
     @Override
