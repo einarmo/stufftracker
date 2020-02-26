@@ -38,7 +38,7 @@ public class TLEManager {
         @Override
         public void run() {
             if (!paused) {
-                tleWorker.postDelayed(this, 1000);
+                tleWorker.postDelayed(this, 200);
             }
             if (dataManager.initialized) {
                 Date start = new Date();
@@ -60,16 +60,13 @@ public class TLEManager {
                 for (int i = 0; i < positions.length; i++) {
                     ObjectWrapper obj = dataManager.objects.get(i);
                     obj.position = tf.transformPosition(positions[i]);
-                    obj.visible = obj.position.getZ() > 0;
-                    if (obj.position.getZ() > 0 && Math.abs(obj.position.getX()) < 100000 && Math.abs(obj.position.getY()) < 100000) {
-                        Log.w(TAG, "OVERHEAD: " + obj.name + ", " + obj.position.toString());
-                    }
+                    obj.baseVisible = obj.objectClass == ObjectClass.STATION || obj.position.getZ() > 0;
+                    //if (obj.position.getZ() > 0 && Math.abs(obj.position.getX()) < 100000 && Math.abs(obj.position.getY()) < 100000) {
+                    //    Log.w(TAG, "OVERHEAD: " + obj.name + ", " + obj.position.toString());
+                    //}
                 }
-
                 Date end = new Date();
-                Log.w(TAG, "TLE Calculations took " + TimeUnit.MILLISECONDS.convert(end.getTime() - start.getTime(), TimeUnit.MILLISECONDS) + " milliseconds");
-
-                Log.w(TAG, dataManager.objects.get(0).position.toString() + ", " + dataManager.objects.get(0).visible + ", " + dataManager.objects.get(0).position.getZ());
+                // Log.w(TAG, "TLE Calculations took " + TimeUnit.MILLISECONDS.convert(end.getTime() - start.getTime(), TimeUnit.MILLISECONDS) + " milliseconds");
                 // TODO: filtering
             }
         }
@@ -94,7 +91,7 @@ public class TLEManager {
         dataManager.resetIteratorCount();
     }
 
-    ArrayList<ObjectWrapper> getObjects() {
+    public ArrayList<ObjectWrapper> getObjects() {
         return dataManager.objects;
     }
 }

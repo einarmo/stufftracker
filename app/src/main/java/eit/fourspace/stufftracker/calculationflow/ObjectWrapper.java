@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ObjectWrapper {
     public final String name;
-    public final ObjectClass objectClass;
+    public ObjectClass objectClass;
     // Relative position in Topocentric Frame
     public Vector3D position;
     // Relative position in android rotated frame
@@ -16,11 +16,14 @@ public class ObjectWrapper {
     public int size; // Size on screen, based on distance (don't know if we will be using this).
 
     // YYYY-NNN[part] launch number NNN of year, with a letter to designate the last part.
+    public final String launchYear;
     public final String launchNumber;
     public final String launchPart;
 
     public boolean visible;
     public boolean filtered;
+    public boolean baseVisible;
+    public boolean selected;
 
     ObjectWrapper(String name, String type, String designation) {
         this.name = name;
@@ -28,7 +31,7 @@ public class ObjectWrapper {
             case "PAYLOAD":
                 objectClass = ObjectClass.PAYLOAD;
                 break;
-            case "ROCKET_BODY":
+            case "ROCKET BODY":
                 objectClass = ObjectClass.ROCKET_BODY;
                 break;
             case "DEBRIS":
@@ -38,15 +41,30 @@ public class ObjectWrapper {
                 objectClass = ObjectClass.UNKNOWN;
                 break;
         }
-        if (designation.length() < 8) {
-            launchNumber = designation;
+        if (designation.length() < 4) {
+            launchYear = designation;
+            launchPart = "";
+            launchNumber = "";
+        } else if (designation.length() < 8) {
+            launchYear = designation.substring(0, 4);
+            if (designation.length() > 4) {
+                launchNumber = designation.substring(5);
+            } else {
+                launchNumber = "";
+            }
+
             launchPart = "";
         } else {
-            launchNumber = designation.substring(0, 8);
+            launchYear = designation.substring(0, 4);
+            launchNumber = designation.substring(5, 8);
             launchPart = designation.substring(8);
+        }
+        if (name.equals("ISS (ZARYA)")) {
+            objectClass = ObjectClass.STATION;
         }
         visible = false;
         filtered = false;
+        baseVisible = false;
         position = new Vector3D(0, 0, 0);
         projection = new Vector2D(0, 0);
         rotatedPosition = new Vector3D(0, 0, 0);

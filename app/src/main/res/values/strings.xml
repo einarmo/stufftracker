@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">StuffTracker</string>
+    <string name="launch_year">Launch Year:</string>
+    <string name="launch_number">Launch Number:</string>
+    <string name="launch_part">Launch Part:</string>
+    <string name="close">Close</string>
 </resources>

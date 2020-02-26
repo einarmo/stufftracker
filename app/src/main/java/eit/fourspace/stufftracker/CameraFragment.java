@@ -1,23 +1,35 @@
 package eit.fourspace.stufftracker;
+import android.app.Service;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.util.DisplayMetrics;
+import android.util.Log;
+import android.util.Size;
+import android.util.SizeF;
+import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.Toast;
+import android.widget.PopupWindow;
+import android.widget.TextView;
 
 import com.google.common.util.concurrent.ListenableFuture;
+
+import net.steamcrafted.materialiconlib.MaterialIconView;
 
 import java.util.concurrent.Executor;
 
 import androidx.annotation.NonNull;
 import androidx.camera.core.AspectRatio;
+import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
@@ -31,6 +43,7 @@ import androidx.navigation.Navigation;
 import eit.fourspace.stufftracker.calculationflow.ItemRenderer;
 import eit.fourspace.stufftracker.calculationflow.LocationManager;
 import eit.fourspace.stufftracker.calculationflow.ObjectDataModel;
+import eit.fourspace.stufftracker.calculationflow.ObjectWrapper;
 import eit.fourspace.stufftracker.calculationflow.RotationSensorManager;
 import eit.fourspace.stufftracker.calculationflow.TLEManager;
 
@@ -45,7 +58,17 @@ public class CameraFragment extends Fragment {
     private RotationSensorManager sensorManager;
     private LocationManager locationManager;
 
-    private Handler asyncMessageHandler;
+    private Size screenSize;
+
+    private ConstraintLayout layoutRoot;
+
+    private ObjectWrapper selectedWrapper;
+
+    private CameraManager manager;
+
+    private PopupWindow popup;
+
+    private OverlayTouchListener touchListener;
 
     private static final String TAG = "CameraFragment";
 
@@ -79,6 +102,7 @@ public class CameraFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        manager = (CameraManager) requireActivity().getSystemService(Service.CAMERA_SERVICE);
         mainExecutor = ContextCompat.getMainExecutor(requireContext());
         sensorManager = new RotationSensorManager(requireContext());
         locationManager = new LocationManager(requireContext());
@@ -88,13 +112,23 @@ public class CameraFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.camera_fragment, container, false);
-        itemRenderer = new ItemRenderer(requireContext(), tleManager, sensorManager, view.findViewById(R.id.canvas_view));
+        layoutRoot = view.findViewById(R.id.camera_container);
+        DisplayMetrics dm = new DisplayMetrics();
+        requireActivity().getWindowManager().getDefaultDisplay().getRealMetrics(dm);
+        screenSize = new Size(dm.widthPixels, dm.heightPixels);
+        View canvasView = view.findViewById(R.id.canvas_view);
+        itemRenderer = new ItemRenderer(requireContext(), tleManager, sensorManager, canvasView, dm);
+        touchListener = new OverlayTouchListener(tleManager, this);
+        canvasView.setOnTouchListener(touchListener);
         return view;
     }
 
     @Override
     public void onConfigurationChanged(@NonNull Configuration config) {
         super.onConfigurationChanged(config);
+        Display display = ((WindowManager) requireContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        itemRenderer.orientation = display.getRotation();
+        dismissPopup(touchListener);
     }
 
     @Override
@@ -108,7 +142,12 @@ public class CameraFragment extends Fragment {
         image.setImageDrawable(canvas);
 
         cameraView = container.findViewById(R.id.camera_view);
+        getCameraAngles();
         cameraView.post(this::startCamera);
+
+        Display display = ((WindowManager) requireContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        itemRenderer.orientation = display.getRotation();
+        Log.w(TAG, "" + display.getRotation());
     }
 
     private void startCamera() {
@@ -135,17 +174,120 @@ public class CameraFragment extends Fragment {
                 return;
             }
             provider.unbindAll();
-            provider.bindToLifecycle(self, cameraSelector, preview);
+            Camera camera = provider.bindToLifecycle(self, cameraSelector, preview);
+            camera.getCameraControl().setLinearZoom(0);
+            getCameraAngles();
+
         }, mainExecutor);
     }
 
     private Integer aspectRatio(int height, int width) {
         double previewRatio = (double)Math.max(width, height) / Math.min(width, height);
         if (Math.abs(previewRatio - 4.0/3.0) <= Math.abs(previewRatio - 16.0/9.0)) {
+            Log.w(TAG, "AR: 4:3");
             return AspectRatio.RATIO_4_3;
         }
+        Log.w(TAG, "AR: 16:9");
+
         return AspectRatio.RATIO_16_9;
     }
 
+    private void getCameraAngles() {
+        if (manager == null) {
+            Log.e(TAG, "Unable to get camera manager");
+            return;
+        }
+
+        try {
+            String[] ids = manager.getCameraIdList();
+            for (String id : ids) {
+                CameraCharacteristics characteristics = manager.getCameraCharacteristics(id);
+                Integer lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING);
+                if (lensFacing != null && lensFacing == CameraCharacteristics.LENS_FACING_BACK) {
+                    float[] focus = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+                    /*for (int j = 0; j < focus.length; j++) {
+                        Log.w(TAG, "Focal: " + focus[j]);
+                    }*/
+                    SizeF size = characteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
+                    Size pSize = characteristics.get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
+                    if (size == null || focus == null || pSize == null) {
+                        Log.e(TAG, "Unable to get camera properties");
+                        return;
+                    }
+                    itemRenderer.physFocal = focus[0];
+                    float w = size.getWidth();
+                    float h = size.getHeight();
+                    float pw = pSize.getWidth();
+                    float ph = pSize.getHeight();
+                    // float diagAngle = (float) (2 * Math.atan(Math.sqrt(w*w+h*h) / (focus[0] * 2)));
+                    itemRenderer.width = pw;
+                    itemRenderer.height = ph;
+                    itemRenderer.physWidth = w;
+                    itemRenderer.physHeight = h;
+                    itemRenderer.updateConstants();
+
+                    // Log.w(TAG, "Diagonal focal angle: " + Math.toDegrees(diagAngle));
+                    return;
+                }
+            }
+        }
+        catch (CameraAccessException e) {
+            Log.e(TAG, "Failed to get camera characteristics: " + e.getMessage());
+        }
+    }
+
+    void showPopup(ObjectWrapper wrapper, OverlayTouchListener listener) {
+        LayoutInflater inflater = (LayoutInflater)requireContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        if (inflater == null) {
+            listener.visible = false;
+            wrapper.selected = false;
+            return;
+        }
+
+        //if (popup != null) {
+        //    popup.dismiss();
+        //}
+        if (selectedWrapper != null) {
+            selectedWrapper.selected = false;
+        }
+
+        View content;
+
+        if (popup == null) {
+            content = inflater.inflate(R.layout.popup, null);
+            popup = new PopupWindow(
+                    content, (int)(screenSize.getWidth()*0.9), (int)(screenSize.getHeight()*0.4)
+            );
+        } else {
+            content = popup.getContentView();
+        }
+
+
+        popup.setElevation(5.0f);
+
+        MaterialIconView closeButton = content.findViewById(R.id.close_button);
+        closeButton.setClickable(true);
+
+        selectedWrapper = wrapper;
+
+        closeButton.setOnClickListener(view -> {
+            popup.dismiss();
+            listener.visible = false;
+            wrapper.selected = false;
+        });
+        ((TextView)content.findViewById(R.id.launch_year)).setText(wrapper.launchYear);
+        ((TextView)content.findViewById(R.id.launch_number)).setText(wrapper.launchNumber);
+        ((TextView)content.findViewById(R.id.launch_part)).setText(wrapper.launchPart);
+        ((TextView)content.findViewById(R.id.nameText)).setText(wrapper.name);
+
+        popup.showAtLocation(layoutRoot, Gravity.START | Gravity.BOTTOM,10, 10);
+    }
+    void dismissPopup(OverlayTouchListener listener) {
+        popup.dismiss();
+        listener.visible = false;
+        if (selectedWrapper != null) {
+            selectedWrapper.selected = false;
+        }
+    }
 
 }

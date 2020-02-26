@@ -44,8 +44,8 @@ public class DataManager {
     private JSONArray rawData;
     public static final int TLE_DATA_NOT_AVAILABLE = 10;
     public static final int TLE_DATA_READY = 11;
-
-    private static final int TLE_SIM_COUNT = 60;
+    private static final double TLE_SIM_STEP = 0.2;
+    private static final int TLE_SIM_COUNT = (int)Math.round(60/TLE_SIM_STEP);
     private int tleItCount = 0;
 
     private TLEPropagator[] propagators;
@@ -187,15 +187,15 @@ public class DataManager {
 
     }
     void propagateTLEs() {
-        AbsoluteDate current = new AbsoluteDate(new Date(), TimeScalesFactory.getUTC());
         if (tleItCount++ % TLE_SIM_COUNT == 0) {
+            AbsoluteDate current = new AbsoluteDate(new Date(), TimeScalesFactory.getUTC());
             Transform tf = TEME.getTransformTo(ITRF, current);
             for (int i = 0; i < propagators.length; i++) {
                 currentCoordinates[i] = tf.transformPVCoordinates(propagators[i].getPVCoordinates(current));
             }
         } else {
             for (int i = 0; i < currentCoordinates.length; i++) {
-                currentCoordinates[i] = currentCoordinates[i].shiftedBy(1);
+                currentCoordinates[i] = currentCoordinates[i].shiftedBy(TLE_SIM_STEP);
             }
             // 60 seconds accumulates about ~8km error. Orbital velocity is about the same, so it shouldn't be any more noticeable.
             // Time shifting is also 4-5 times faster, meaning that while we should still limit ourselves to <= 10/s, we can safely turn up the rate quite a bit.

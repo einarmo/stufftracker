@@ -8,14 +8,18 @@ import android.util.Log;
 import android.widget.Toast;
 
 import org.orekit.data.DataProvidersManager;
+import org.orekit.data.DirectoryCrawler;
 import org.orekit.data.ZipJarCrawler;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -43,31 +47,55 @@ public class PermissionsFragment extends Fragment {
     }
 
     private void setupOrekitResource() {
-        File data = new File("orekitdata.zip");
+        String path = requireContext().getFilesDir().getPath() + "/orekitdata2/";
+        File data = new File(path);
         DataProvidersManager manager = DataProvidersManager.getInstance();
         if (data.exists()) {
-            manager.addProvider(new ZipJarCrawler(data));
+            manager.addProvider(new DirectoryCrawler(data));
             return;
         }
+        data.mkdirs();
         InputStream stream = getResources().openRawResource(getResources().getIdentifier("orekitdata", "raw", requireContext().getPackageName()));
-        File out;
-        try {
-            out = File.createTempFile("orekitdata", ".zip");
-            byte[] buffer = new byte[stream.available()];
-            stream.read(buffer);
-            stream.close();
-            OutputStream outStream = new FileOutputStream(out);
-            outStream.write(buffer);
-            outStream.flush();
-            outStream.close();
-            manager.addProvider(new ZipJarCrawler(out));
+        ZipInputStream zis;
+        try
+        {
+            String filename;
+            zis = new ZipInputStream(new BufferedInputStream(stream));
+            ZipEntry ze;
+            byte[] buffer = new byte[1024];
+            int count;
+
+            while ((ze = zis.getNextEntry()) != null)
+            {
+                filename = ze.getName();
+                // Need to create directories if not exists, or
+                // it will generate an Exception...
+                if (ze.isDirectory()) {
+                    File fmd = new File(path + filename);
+                    fmd.mkdirs();
+                    continue;
+                }
+
+                FileOutputStream fout = new FileOutputStream(path + filename);
+
+                while ((count = zis.read(buffer)) != -1)
+                {
+                    fout.write(buffer, 0, count);
+                }
+
+                fout.close();
+                zis.closeEntry();
+            }
+
+            zis.close();
         }
-        catch (FileNotFoundException ex) {
-            Log.w(TAG, "Orekit out not found");
+        catch(IOException e)
+        {
+            Log.e(TAG, "Error extracting data", e);
+            return;
         }
-        catch (IOException ex) {
-            Log.w(TAG, "Failed to read from stream");
-        }
+        data = new File(path);
+        manager.addProvider(new DirectoryCrawler(data));
     }
 
     @Override

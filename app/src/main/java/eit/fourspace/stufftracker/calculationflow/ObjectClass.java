@@ -4,5 +4,6 @@ public enum ObjectClass {
     PAYLOAD,
     ROCKET_BODY,
     DEBRIS,
-    UNKNOWN
+    UNKNOWN,
+    STATION
 }

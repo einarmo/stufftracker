@@ -3,13 +3,13 @@ package eit.fourspace.stufftracker.calculationflow;
 import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.util.Log;
+import android.util.DisplayMetrics;
+import android.view.Surface;
 import android.view.View;
 
 import org.hipparchus.geometry.euclidean.threed.Rotation;
 import org.hipparchus.geometry.euclidean.twod.Vector2D;
 import org.hipparchus.linear.Array2DRowRealMatrix;
-import org.hipparchus.linear.RealMatrix;
 import org.orekit.frames.Transform;
 import org.orekit.time.AbsoluteDate;
 
@@ -28,7 +28,22 @@ public class ItemRenderer {
 
     private boolean paused;
 
-    private int cnt = 0;
+    public double width;
+    public double height;
+
+    public double physWidth;
+    public double physHeight;
+    public double physFocal;
+
+    public int orientation;
+
+    public double screenWidth;
+    public double screenHeight;
+
+    private double scale;
+    private double scale2;
+    private double xshift;
+    private double yshift;
 
     private Runnable renderRunnable = new Runnable() {
         @Override
@@ -37,7 +52,6 @@ public class ItemRenderer {
                 renderWorker.postDelayed(this, 17);
             }
             ArrayList<ObjectWrapper> objects = tleManager.getObjects();
-            // TODO: Fetch rotation data, then do projection transform.
             // Depending on what we end up with, we may do time-based transformation here as well.
             // Might as well, really, not like doing one more transformation in the same matrix costs any more
 
@@ -48,23 +62,39 @@ public class ItemRenderer {
 
             for (int i = 0; i < objects.size(); i++) {
                 ObjectWrapper obj = objects.get(i);
-                if (!obj.visible) continue;
+                obj.visible = obj.baseVisible;
+                if (!obj.baseVisible || obj.filtered) continue;
                 obj.rotatedPosition = tf.transformPosition(obj.position);
                 obj.visible = obj.rotatedPosition.getZ() < 0;
+                if (!obj.visible || obj.filtered) continue;
+
+                double z0 = obj.rotatedPosition.getZ();
+                double y0 = obj.rotatedPosition.getY();
+                double x0 = obj.rotatedPosition.getX();
+
+                switch (orientation) {
+                    case Surface.ROTATION_0:
+                        obj.projection = new Vector2D((width/2 - x0/z0*scale)*scale2 + xshift, (height/2 + y0/z0*scale)*scale2 + yshift);
+                        break;
+                    case Surface.ROTATION_90:
+                        obj.projection = new Vector2D((height/2 + y0/z0*scale)*scale2 + yshift, (width/2 + x0/z0*scale)*scale2 + xshift);
+                        break;
+                    case Surface.ROTATION_180:
+                        obj.projection = new Vector2D((width/2 + x0/z0*scale)*scale2 + xshift, (height/2 - y0/z0*scale)*scale2 + yshift);
+                        break;
+                    case Surface.ROTATION_270:
+                        obj.projection = new Vector2D((height/2 - y0/z0*scale)*scale2 + yshift, (width/2 - x0/z0*scale)*scale2 + xshift);
+                        break;
+                }
             }
 
-            // Log.w(TAG, objects.get(0).rotatedPosition.toString() + ", " + objects.get(0).visible);
 
 
-            /*objects.get(0).visible = true;
-            objects.get(0).filtered = false;
-            objects.get(0).projection = new Vector2D(cnt % 500, cnt % 500);
-            cnt++;
-            canvasView.invalidate();*/
+            canvasView.invalidate();
         }
     };
 
-    public ItemRenderer(Context context, TLEManager tleManager, RotationSensorManager rotationManager, View canvasView) {
+    public ItemRenderer(Context context, TLEManager tleManager, RotationSensorManager rotationManager, View canvasView, DisplayMetrics dm) {
         this.tleManager = tleManager;
         this.rotationManager = rotationManager;
         this.canvasView = canvasView;
@@ -81,6 +111,13 @@ public class ItemRenderer {
     public void onResume() {
         paused = false;
         renderWorker.postDelayed(renderRunnable,1000);
+    }
+
+    public void updateConstants() {
+        scale = physFocal * width / physWidth;
+        scale2 = screenHeight / height;
+        xshift = - (scale2*width - screenWidth)/2;
+        yshift = - (scale2*height - screenHeight)/2;
     }
 
     public ArrayList<ObjectWrapper> getObjects() {
