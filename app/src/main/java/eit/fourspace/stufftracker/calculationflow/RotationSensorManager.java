@@ -24,11 +24,17 @@ public class RotationSensorManager implements SensorEventListener {
     private final float[] localMatrix = new float[9];
     private SensorManager sensorManager;
 
-    //private Butterworth filterMag = new Butterworth(new double[] {0.5069731667, -2.8782914219, 6.5626122971, -7.5141824113, 4.3225961268}, 3, 1.094980613e+05);
-    //private Butterworth filterGrav = new Butterworth(new double[] {0.5069731667, -2.8782914219, 6.5626122971, -7.5141824113, 4.3225961268}, 3, 1.094980613e+05);
+    private final float[] rotVectorReading = new float[4];
+    private final float[] rotVectorReadingL = new float[4];
 
-    private Butterworth filterMag = new Butterworth(new double[] { 0.6011158229, -3.3110475620, 7.3120812802, -8.0940554178, 4.4918309651 }, 3, 4.271694293e+05);
-    private Butterworth filterGrav = new Butterworth(new double[] { 0.6011158229, -3.3110475620, 7.3120812802, -8.0940554178, 4.4918309651 }, 3, 4.271694293e+05);
+    private Butterworth filterMag = new Butterworth(new double[] {0.5069731667, -2.8782914219, 6.5626122971, -7.5141824113, 4.3225961268}, 3, 1.094980613e+05);
+    private Butterworth filterGrav = new Butterworth(new double[] {0.5069731667, -2.8782914219, 6.5626122971, -7.5141824113, 4.3225961268}, 3, 1.094980613e+05);
+
+    //private Butterworth filterMag = new Butterworth(new double[] { 0.6011158229, -3.3110475620, 7.3120812802, -8.0940554178, 4.4918309651 }, 3, 4.271694293e+05);
+    //private Butterworth filterGrav = new Butterworth(new double[] { 0.6011158229, -3.3110475620, 7.3120812802, -8.0940554178, 4.4918309651 }, 3, 4.271694293e+05);
+
+    //private Butterworth filterMag = new Butterworth(new double[] {0.8441170973, -4.3636080283, 9.0254524705, -9.3365274216, 4.8305655200}, 3, 8.840143939e+07);
+    //private Butterworth filterGrav = new Butterworth(new double[] {0.8441170973, -4.3636080283, 9.0254524705, -9.3365274216, 4.8305655200}, 3, 8.840143939e+07);
 
     private boolean changedSinceLast = true;
 
@@ -37,7 +43,7 @@ public class RotationSensorManager implements SensorEventListener {
     }
 
     public void onResume() {
-        Sensor gravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+        /*Sensor gravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
         if (gravity == null) {
             gravity = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         }
@@ -47,6 +53,10 @@ public class RotationSensorManager implements SensorEventListener {
         Sensor magnetic = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         if (magnetic != null) {
             sensorManager.registerListener(this, magnetic, SensorManager.SENSOR_DELAY_FASTEST, SensorManager.SENSOR_DELAY_FASTEST);
+        }*/
+        Sensor rotVector = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+        if (rotVector != null) {
+            sensorManager.registerListener(this, rotVector, SensorManager.SENSOR_DELAY_GAME);
         }
     }
 
@@ -56,7 +66,7 @@ public class RotationSensorManager implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_GRAVITY || event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+        /*if (event.sensor.getType() == Sensor.TYPE_GRAVITY || event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             synchronized (this) {
                 System.arraycopy(event.values, 0, gravityReading, 0, 3);
                 //System.arraycopy(event.values, 0, gravityReading2[++currentReadingG % READING_COUNT], 0, 3);
@@ -68,6 +78,12 @@ public class RotationSensorManager implements SensorEventListener {
                 System.arraycopy(event.values, 0, magnetometerReading, 0, 3);
                 //System.arraycopy(event.values, 0, magnetometerReading2[++currentReadingM % READING_COUNT], 0, 3);
                 //applyLowPassFilter(event.values.clone(), magnetometerReading2[++currentReadingM % READING_COUNT], 0.05f);
+            }
+            changedSinceLast = true;
+        } else if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {*/
+        if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
+            synchronized (this) {
+                System.arraycopy(event.values, 0, rotVectorReading, 0, 4);
             }
             changedSinceLast = true;
         }
@@ -83,10 +99,13 @@ public class RotationSensorManager implements SensorEventListener {
 
         //applyAverageFiltering(gravityReading2, gravityReading);
         //applyAverageFiltering(magnetometerReading2, magnetometerReading);
-        applyButterworthFilter(gravityReading, gravityReadingL, filterGrav);
+        /*applyButterworthFilter(gravityReading, gravityReadingL, filterGrav);
         applyButterworthFilter(magnetometerReading, magnetometerReadingL, filterMag);
 
-        android.hardware.SensorManager.getRotationMatrix(localMatrix, null, gravityReadingL, magnetometerReadingL);
+        android.hardware.SensorManager.getRotationMatrix(localMatrix, null, gravityReadingL, magnetometerReadingL);*/
+        //applyButterworthFilter(rotVectorReading, rotVectorReadingL, filterGrav);
+        //applyLowPassFilter(rotVectorReading, rotVectorReadingL, 0.05f);
+        android.hardware.SensorManager.getRotationMatrixFromVector(localMatrix, rotVectorReading);
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 // Intentionally insert them transposed
@@ -140,9 +159,9 @@ public class RotationSensorManager implements SensorEventListener {
             xv[dim][5] = input/gain;
             yv[dim][0] = yv[dim][1]; yv[dim][1] = yv[dim][2]; yv[dim][2] = yv[dim][3]; yv[dim][3] = yv[dim][4]; yv[dim][4] = yv[dim][5];
             yv[dim][5] =   (xv[dim][0] + xv[dim][5]) + 5 * (xv[dim][1] + xv[dim][4]) + 10 * (xv[dim][2] + xv[dim][3])
-                    + (  gains[0] * yv[dim][0]) + ( gains[1] * yv[dim][1])
-                    + (  gains[2] * yv[dim][2]) + ( gains[3] * yv[dim][3])
-                    + (  gains[4] * yv[dim][4]);
+                    + (gains[0] * yv[dim][0]) + (gains[1] * yv[dim][1])
+                    + (gains[2] * yv[dim][2]) + (gains[3] * yv[dim][3])
+                    + (gains[4] * yv[dim][4]);
             return (float)yv[dim][5];
         }
     }

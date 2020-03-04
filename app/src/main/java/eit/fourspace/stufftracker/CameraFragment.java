@@ -236,7 +236,7 @@ public class CameraFragment extends Fragment {
         }
     }
 
-    void showPopup(ObjectWrapper wrapper, OverlayTouchListener listener) {
+    synchronized void showPopup(ObjectWrapper wrapper, OverlayTouchListener listener) {
         LayoutInflater inflater = (LayoutInflater)requireContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         if (inflater == null) {
             listener.visible = false;
@@ -282,7 +282,8 @@ public class CameraFragment extends Fragment {
 
         popup.showAtLocation(layoutRoot, Gravity.START | Gravity.BOTTOM,10, 10);
     }
-    void dismissPopup(OverlayTouchListener listener) {
+    synchronized void dismissPopup(OverlayTouchListener listener) {
+        if (popup == null) return;
         popup.dismiss();
         listener.visible = false;
         if (selectedWrapper != null) {

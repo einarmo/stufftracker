@@ -47,6 +47,7 @@ public class OverlayTouchListener implements View.OnTouchListener {
             visible = true;
         } else {
             Log.w(TAG, "No hits: " + x + ", " + y);
+            root.dismissPopup(this);
         }
 
         return true;
