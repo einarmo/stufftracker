@@ -15,6 +15,10 @@ import org.orekit.time.AbsoluteDate;
 
 import java.util.ArrayList;
 
+import androidx.lifecycle.ViewModelProvider;
+import eit.fourspace.stufftracker.config.ConfigData;
+import eit.fourspace.stufftracker.config.ConfigDataModel;
+
 public class ItemRenderer {
     private TLEManager tleManager;
     private RotationSensorManager rotationManager;
@@ -25,6 +29,8 @@ public class ItemRenderer {
     private Array2DRowRealMatrix rotationMatrix = new Array2DRowRealMatrix(3, 3);
 
     private Handler renderWorker;
+
+    private ConfigDataModel configDataModel;
 
     private boolean paused;
 
@@ -57,6 +63,13 @@ public class ItemRenderer {
 
             if (objects.size() == 0) return;
 
+            ConfigData data = configDataModel.getDataManager().getValue();
+
+            double cameraRatio = 1;
+            if (data != null) {
+                cameraRatio = data.getCameraRatio();
+            }
+
             rotationManager.getRotationMatrix(rotationMatrix);
             Transform tf = new Transform(AbsoluteDate.JAVA_EPOCH, new Rotation(rotationMatrix.getData(), 1e-4));
 
@@ -74,16 +87,16 @@ public class ItemRenderer {
 
                 switch (orientation) {
                     case Surface.ROTATION_0:
-                        obj.projection = new Vector2D((width/2 - x0/z0*scale)*scale2 + xshift, (height/2 + y0/z0*scale)*scale2 + yshift);
+                        obj.projection = new Vector2D((width/2 - x0/z0*scale)*scale2*cameraRatio + xshift, (height/2 + y0/z0*scale)*scale2*cameraRatio + yshift);
                         break;
                     case Surface.ROTATION_90:
-                        obj.projection = new Vector2D((height/2 + y0/z0*scale)*scale2 + yshift, (width/2 + x0/z0*scale)*scale2 + xshift);
+                        obj.projection = new Vector2D((height/2 + y0/z0*scale)*scale2*cameraRatio + yshift, (width/2 + x0/z0*scale)*scale2*cameraRatio + xshift);
                         break;
                     case Surface.ROTATION_180:
-                        obj.projection = new Vector2D((width/2 + x0/z0*scale)*scale2 + xshift, (height/2 - y0/z0*scale)*scale2 + yshift);
+                        obj.projection = new Vector2D((width/2 + x0/z0*scale)*scale2*cameraRatio + xshift, (height/2 - y0/z0*scale)*scale2*cameraRatio + yshift);
                         break;
                     case Surface.ROTATION_270:
-                        obj.projection = new Vector2D((height/2 - y0/z0*scale)*scale2 + yshift, (width/2 - x0/z0*scale)*scale2 + xshift);
+                        obj.projection = new Vector2D((height/2 - y0/z0*scale)*scale2*cameraRatio + yshift, (width/2 - x0/z0*scale)*scale2*cameraRatio + xshift);
                         break;
                 }
             }
@@ -94,13 +107,14 @@ public class ItemRenderer {
         }
     };
 
-    public ItemRenderer(Context context, TLEManager tleManager, RotationSensorManager rotationManager, View canvasView, DisplayMetrics dm) {
+    public ItemRenderer(Context context, TLEManager tleManager, RotationSensorManager rotationManager, View canvasView, ConfigDataModel configDataModel) {
         this.tleManager = tleManager;
         this.rotationManager = rotationManager;
         this.canvasView = canvasView;
         HandlerThread renderWorkerThread = new HandlerThread("RenderWorker", 2);
         renderWorkerThread.start();
         renderWorker = new Handler(renderWorkerThread.getLooper());
+        this.configDataModel = configDataModel;
     }
 
     public void onPause() {

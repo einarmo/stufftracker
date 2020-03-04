@@ -46,6 +46,7 @@ import eit.fourspace.stufftracker.calculationflow.ObjectDataModel;
 import eit.fourspace.stufftracker.calculationflow.ObjectWrapper;
 import eit.fourspace.stufftracker.calculationflow.RotationSensorManager;
 import eit.fourspace.stufftracker.calculationflow.TLEManager;
+import eit.fourspace.stufftracker.config.ConfigDataModel;
 
 
 public class CameraFragment extends Fragment {
@@ -106,7 +107,8 @@ public class CameraFragment extends Fragment {
         mainExecutor = ContextCompat.getMainExecutor(requireContext());
         sensorManager = new RotationSensorManager(requireContext());
         locationManager = new LocationManager(requireContext());
-        tleManager = new TLEManager(requireContext(), new ViewModelProvider(requireActivity()).get(ObjectDataModel.class).getDataManager().getValue(), locationManager);
+        tleManager = new TLEManager(requireContext(), new ViewModelProvider(requireActivity()).get(ObjectDataModel.class).getDataManager().getValue(),
+                locationManager, new ViewModelProvider(requireActivity()).get(ConfigDataModel.class));
     }
 
     @Override
@@ -117,7 +119,7 @@ public class CameraFragment extends Fragment {
         requireActivity().getWindowManager().getDefaultDisplay().getRealMetrics(dm);
         screenSize = new Size(dm.widthPixels, dm.heightPixels);
         View canvasView = view.findViewById(R.id.canvas_view);
-        itemRenderer = new ItemRenderer(requireContext(), tleManager, sensorManager, canvasView, dm);
+        itemRenderer = new ItemRenderer(requireContext(), tleManager, sensorManager, canvasView, new ViewModelProvider(requireActivity()).get(ConfigDataModel.class));
         touchListener = new OverlayTouchListener(tleManager, this);
         canvasView.setOnTouchListener(touchListener);
         return view;
@@ -269,6 +271,7 @@ public class CameraFragment extends Fragment {
         closeButton.setClickable(true);
 
         selectedWrapper = wrapper;
+        selectedWrapper.selected = true;
 
         closeButton.setOnClickListener(view -> {
             popup.dismiss();
@@ -283,7 +286,7 @@ public class CameraFragment extends Fragment {
         popup.showAtLocation(layoutRoot, Gravity.START | Gravity.BOTTOM,10, 10);
     }
     synchronized void dismissPopup(OverlayTouchListener listener) {
-        if (popup == null) return;
+        if (popup == null || !popup.isShowing()) return;
         popup.dismiss();
         listener.visible = false;
         if (selectedWrapper != null) {

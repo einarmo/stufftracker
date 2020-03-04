@@ -4,15 +4,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProvider;
 import eit.fourspace.stufftracker.calculationflow.ObjectDataModel;
+import eit.fourspace.stufftracker.config.ConfigDataModel;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowInsets;
 import android.widget.FrameLayout;
+
+import com.google.android.material.navigation.NavigationView;
 
 
 public class MainActivity extends AppCompatActivity implements LifecycleOwner {
     private FrameLayout container;
     private ObjectDataModel dataModel;
+    private ConfigDataModel configDataModel;
 
     private static final int FLAGS_FULLSCREEN =
             View.SYSTEM_UI_FLAG_LOW_PROFILE
@@ -29,7 +35,15 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
         setContentView(R.layout.activity_main);
         container = findViewById(R.id.nav_container);
 
-        dataModel = new ViewModelProvider(this).get(ObjectDataModel.class);
+        ViewModelProvider provider = new ViewModelProvider(this);
+
+        dataModel = provider.get(ObjectDataModel.class);
+        configDataModel = provider.get(ConfigDataModel.class);
+
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        if (navigationView != null) {
+            navigationView.setOnApplyWindowInsetsListener((v, insets) -> insets);
+        }
     }
 
     @Override

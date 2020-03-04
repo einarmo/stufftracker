@@ -23,6 +23,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+import eit.fourspace.stufftracker.config.ConfigData;
+import eit.fourspace.stufftracker.config.ConfigDataModel;
+
 public class TLEManager {
     private boolean paused = false;
     private Handler tleWorker;
@@ -31,6 +34,8 @@ public class TLEManager {
     private DataManager dataManager;
     private LocationManager locManager;
     private final double[] locationVector = new double[3];
+
+    private ConfigDataModel configDataModel;
 
     private ReferenceEllipsoid earth = null;
 
@@ -49,6 +54,13 @@ public class TLEManager {
                 dataManager.refreshPositions();
                 Vector3D[] positions = dataManager.getPositions();
 
+                boolean showAll = false;
+                ConfigData configData = configDataModel.getDataManager().getValue();
+                if (configData != null) {
+                    //showAll = configData.getShowAll();
+                    showAll = true;
+                }
+
                 ArrayList<ObjectWrapper> objects = dataManager.objects;
 
                 locManager.getLocation(locationVector);
@@ -60,7 +72,7 @@ public class TLEManager {
                 for (int i = 0; i < positions.length; i++) {
                     ObjectWrapper obj = dataManager.objects.get(i);
                     obj.position = tf.transformPosition(positions[i]);
-                    obj.baseVisible = obj.objectClass == ObjectClass.STATION || obj.position.getZ() > 0;
+                    obj.baseVisible = showAll || obj.objectClass == ObjectClass.STATION || obj.position.getZ() > 0;
                     //if (obj.position.getZ() > 0 && Math.abs(obj.position.getX()) < 100000 && Math.abs(obj.position.getY()) < 100000) {
                     //    Log.w(TAG, "OVERHEAD: " + obj.name + ", " + obj.position.toString());
                     //}
@@ -72,12 +84,13 @@ public class TLEManager {
         }
     };
 
-    public TLEManager(Context context, DataManager dataManager, LocationManager locManager) {
+    public TLEManager(Context context, DataManager dataManager, LocationManager locManager, ConfigDataModel configDataModel) {
         this.dataManager = dataManager;
         this.locManager = locManager;
         HandlerThread tleWorkerThread = new HandlerThread("TLEWorker", 5);
         tleWorkerThread.start();
         tleWorker = new Handler(tleWorkerThread.getLooper());
+        this.configDataModel = configDataModel;
     }
 
     public void onPause() {
