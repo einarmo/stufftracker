@@ -5,6 +5,7 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProvider;
 import eit.fourspace.stufftracker.calculationflow.ObjectDataModel;
 import eit.fourspace.stufftracker.config.ConfigDataModel;
+import eit.fourspace.stufftracker.config.ConfigViewManager;
 
 import android.os.Build;
 import android.os.Bundle;
@@ -44,6 +45,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
         if (navigationView != null) {
             navigationView.setOnApplyWindowInsetsListener((v, insets) -> insets);
         }
+        new ConfigViewManager(configDataModel, findViewById(R.id.config_container));
     }
 
     @Override

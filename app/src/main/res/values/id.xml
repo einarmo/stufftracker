@@ -7,4 +7,5 @@
     <item type="id" name="nav_container" />
     <item type="id" name="camera_fragment" />
     <item type="id" name="nav_graph" />
+    <item type="id" name="show_all" />
 </resources>

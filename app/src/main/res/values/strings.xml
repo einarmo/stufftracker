@@ -5,4 +5,6 @@
     <string name="launch_part">Launch Part:</string>
     <string name="close">Close</string>
     <string name="settings_header">Settings</string>
+    <string name="show_all">Show all objects </string>
+    <string name="true_north">Use true north </string>
 </resources>

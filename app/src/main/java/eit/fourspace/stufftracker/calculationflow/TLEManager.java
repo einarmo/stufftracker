@@ -57,8 +57,7 @@ public class TLEManager {
                 boolean showAll = false;
                 ConfigData configData = configDataModel.getDataManager().getValue();
                 if (configData != null) {
-                    //showAll = configData.getShowAll();
-                    showAll = true;
+                    showAll = configData.getShowAll();
                 }
 
                 ArrayList<ObjectWrapper> objects = dataManager.objects;
@@ -73,7 +72,7 @@ public class TLEManager {
 
                 Transform tf = dataManager.ITRF.getTransformTo(localFrame, date);
 
-                if (configData != null && configData.getTrueNorth() || true) {
+                if (configData != null && configData.getTrueNorth()) {
                     double geoMagAngle = new GeomagneticField((float)locationVector[0], (float)locationVector[1], (float)locationVector[2], rawDate.getTime()).getDeclination();
                     Rotation rot = new Rotation(new Vector3D(0, 0, 1), FastMath.toRadians(geoMagAngle), RotationConvention.FRAME_TRANSFORM);
                     tf = new Transform(date, tf, new Transform(date, rot));
