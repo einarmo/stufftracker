@@ -1,6 +1,7 @@
 package eit.fourspace.stufftracker.calculationflow;
 
 import android.content.Context;
+import android.hardware.GeomagneticField;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
@@ -46,7 +47,6 @@ public class TLEManager {
                 tleWorker.postDelayed(this, 200);
             }
             if (dataManager.initialized) {
-                Date start = new Date();
                 if (earth == null) {
                     earth = ReferenceEllipsoid.getWgs84(dataManager.ITRF);
                 }
@@ -67,7 +67,17 @@ public class TLEManager {
                 GeodeticPoint location = new GeodeticPoint(FastMath.toRadians(locationVector[0]), FastMath.toRadians(locationVector[1]), locationVector[2]);
                 TopocentricFrame localFrame = new TopocentricFrame(earth, location, "CurrentLocation");
 
-                Transform tf = dataManager.ITRF.getTransformTo(localFrame, new AbsoluteDate(new Date(), TimeScalesFactory.getUTC()));
+                Date rawDate = new Date();
+
+                AbsoluteDate date = new AbsoluteDate(rawDate, TimeScalesFactory.getUTC());
+
+                Transform tf = dataManager.ITRF.getTransformTo(localFrame, date);
+
+                if (configData != null && configData.getTrueNorth() || true) {
+                    double geoMagAngle = new GeomagneticField((float)locationVector[0], (float)locationVector[1], (float)locationVector[2], rawDate.getTime()).getDeclination();
+                    Rotation rot = new Rotation(new Vector3D(0, 0, 1), FastMath.toRadians(geoMagAngle), RotationConvention.FRAME_TRANSFORM);
+                    tf = new Transform(date, tf, new Transform(date, rot));
+                }
 
                 for (int i = 0; i < positions.length; i++) {
                     ObjectWrapper obj = dataManager.objects.get(i);
@@ -77,7 +87,6 @@ public class TLEManager {
                     //    Log.w(TAG, "OVERHEAD: " + obj.name + ", " + obj.position.toString());
                     //}
                 }
-                Date end = new Date();
                 // Log.w(TAG, "TLE Calculations took " + TimeUnit.MILLISECONDS.convert(end.getTime() - start.getTime(), TimeUnit.MILLISECONDS) + " milliseconds");
                 // TODO: filtering
             }

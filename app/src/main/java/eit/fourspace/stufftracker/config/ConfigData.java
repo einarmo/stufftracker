@@ -19,6 +19,7 @@ public class ConfigData {
     private double cameraRatio;
     private boolean showAll;
     private Context context;
+    private boolean trueNorth;
     private static final String TAG = "CONFIG_DATA";
 
     ConfigData(Context context) {
@@ -57,12 +58,14 @@ public class ConfigData {
                 filterString = "";
                 cameraRatio = 1;
                 showAll = false;
+                trueNorth = false;
                 SaveData(context);
             } else {
                 filterString = "";
                 try {
                     cameraRatio = data.getDouble("cameraRatio");
                     showAll = data.getBoolean("showAll");
+                    trueNorth = data.getBoolean("trueNorth");
                 } catch (JSONException e) {
                     cameraRatio = 1;
                     showAll = false;
@@ -75,6 +78,7 @@ public class ConfigData {
         try {
             data.put("cameraRatio", cameraRatio);
             data.put("showAll", showAll);
+            data.put("trueNorth", trueNorth);
             OutputStreamWriter writer = new OutputStreamWriter(context.openFileOutput("config.json", Context.MODE_PRIVATE));
             writer.write(data.toString());
             writer.flush();
@@ -90,20 +94,23 @@ public class ConfigData {
 
     public void setCameraRatio(double nRatio) {
         cameraRatio = nRatio;
-        AsyncTask.execute(() -> {
-            SaveData(context);
-        });
+        AsyncTask.execute(() -> SaveData(context));
     }
     public double getCameraRatio() {
         return cameraRatio;
     }
     public void setShowAll(boolean nShowAll) {
         showAll = nShowAll;
-        AsyncTask.execute(() -> {
-            SaveData(context);
-        });
+        AsyncTask.execute(() -> SaveData(context));
     }
     public boolean getShowAll() {
         return showAll;
+    }
+    public void setTrueNorth(boolean nTrueNorth) {
+        trueNorth = nTrueNorth;
+        AsyncTask.execute(() -> SaveData(context));
+    }
+    public boolean getTrueNorth() {
+        return trueNorth;
     }
 }
