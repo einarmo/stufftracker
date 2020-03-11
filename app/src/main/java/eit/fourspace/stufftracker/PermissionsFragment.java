@@ -3,8 +3,15 @@ package eit.fourspace.stufftracker;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.AnimatedVectorDrawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import org.orekit.data.DataProvidersManager;
@@ -24,12 +31,18 @@ import java.util.zip.ZipInputStream;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+import eit.fourspace.stufftracker.calculationflow.ObjectDataModel;
+import eit.fourspace.stufftracker.config.ConfigData;
 
 public class PermissionsFragment extends Fragment {
     private static final int REQUEST_CODE_PERM = 11;
     private static final String[] REQUIRED_PERMS = {Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.INTERNET, Manifest.permission.ACCESS_NETWORK_STATE};
+
+    boolean oneLoaded = false;
 
     private static final String TAG = "Permissions";
 
@@ -37,13 +50,21 @@ public class PermissionsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
         if (!allPermissionsGranted(requireContext())) {
             requestPermissions(REQUIRED_PERMS, REQUEST_CODE_PERM);
         } else {
-            Navigation.findNavController(requireActivity(), R.id.nav_container).navigate(
-                    PermissionsFragmentDirections.actionPermissionsFragmentToCameraFragment());
+            waitForFinalization();
         }
         setupOrekitResource();
+    }
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.loading_view, container, false);
+        ImageView loadingView = view.findViewById(R.id.loading_image);
+        loadingView.setBackgroundResource(R.drawable.ic_icon_loading_animated);
+        ((AnimatedVectorDrawable)loadingView.getBackground()).start();
+        return view;
     }
 
     private void setupOrekitResource() {
@@ -98,12 +119,59 @@ public class PermissionsFragment extends Fragment {
         manager.addProvider(new DirectoryCrawler(data));
     }
 
+    private void waitForFinalization() {
+        ViewModelProvider provider = new ViewModelProvider(requireActivity());
+        ConfigData configModel = provider.get(ConfigData.class);
+        ObjectDataModel dataModel = provider.get(ObjectDataModel.class);
+        configModel.getReady().observeForever(new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (aBoolean == null) return;
+                configModel.getReady().removeObserver(this);
+                if (!aBoolean) {
+                    Toast.makeText(requireContext(), "Unable to load configuration", Toast.LENGTH_LONG).show();
+                    exitOnDelay();
+                } else {
+                    if (oneLoaded) {
+                        Navigation.findNavController(requireActivity(), R.id.nav_container).navigate(
+                                PermissionsFragmentDirections.actionPermissionsFragmentToCameraFragment());
+                    } else {
+                        oneLoaded = true;
+                    }
+                }
+            }
+        });
+        dataModel.getReady().observeForever(new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (aBoolean == null) return;
+                dataModel.getReady().removeObserver(this);
+                if (!aBoolean) {
+                    Toast.makeText(requireContext(), "Unable to load TLE data", Toast.LENGTH_LONG).show();
+                    exitOnDelay();
+                } else {
+                    if (oneLoaded) {
+                        Navigation.findNavController(requireActivity(), R.id.nav_container).navigate(
+                                PermissionsFragmentDirections.actionPermissionsFragmentToCameraFragment());
+                    } else {
+                        oneLoaded = true;
+                    }
+                }
+            }
+        });
+    }
+
+    private void exitOnDelay() {
+        new Handler().postDelayed(() -> {
+            System.exit(1);
+        }, 2000);
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CODE_PERM) {
             if (allPermissionsGranted(requireContext())) {
-                Navigation.findNavController(requireActivity(), R.id.nav_container).navigate(
-                        PermissionsFragmentDirections.actionPermissionsFragmentToCameraFragment());
+                waitForFinalization();
             } else {
                 Toast.makeText(requireContext(),"Permissions not granted by user", Toast.LENGTH_SHORT).show();
             }

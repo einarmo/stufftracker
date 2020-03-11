@@ -25,11 +25,9 @@ public class ObjectDataModel extends AndroidViewModel {
             public void handleMessage(@NonNull Message message) {
                 switch(message.what) {
                     case DataManager.TLE_DATA_NOT_AVAILABLE:
-                        Toast.makeText(context, "Unable to retrieve TLE data", Toast.LENGTH_LONG).show();
                         ready.postValue(false);
                         break;
                     case DataManager.TLE_DATA_READY:
-                        Toast.makeText(context, "TLE data ready to use", Toast.LENGTH_LONG).show();
                         ready.postValue(true);
                         break;
                     default:

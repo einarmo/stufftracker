@@ -30,7 +30,6 @@
             android:id="@+id/config_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@android:color/darker_gray"
             android:orientation="vertical">
             <include layout="@layout/options_header" />
 
@@ -49,7 +48,7 @@
                 </TableRow>
                 <TableRow>
                     <TextView android:text="@string/true_north" />
-                    <Switch android:id="@+id/true_north" />
+                    <Switch android:id="@+id/true_north" android:checked="true" />
                 </TableRow>
                 <TableRow>
                     <TextView android:text="@string/camera_ratio"
@@ -88,11 +87,7 @@
                         android:checked="true"/>
                 </TableRow>
             </TableLayout>
-        <ImageView
-            android:background="@android:color/darker_gray"
-            android:id="@+id/image_test"
-            android:layout_width="150dp"
-            android:layout_height="150dp" />
+
         </LinearLayout>
     </com.google.android.material.navigation.NavigationView>
 

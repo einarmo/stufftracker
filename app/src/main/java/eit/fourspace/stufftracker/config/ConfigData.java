@@ -34,10 +34,12 @@ public class ConfigData extends AndroidViewModel {
         super(context);
         this.context = context;
         Init();
+        Log.w(TAG, "Init config");
     }
 
     private void Init() {
         AsyncTask.execute(() -> {
+            Log.w(TAG, "Begin load config");
             JSONObject data;
             try {
                 InputStream inputStream = context.openFileInput("config.json");
@@ -88,6 +90,8 @@ public class ConfigData extends AndroidViewModel {
                     trueNorth.postValue(true);
                 }
             }
+            ready.postValue(true);
+            Log.w(TAG, "Finish load config");
         });
     }
     private synchronized void SaveData(Context context, Double lCameraRatio, Boolean lShowAll, Boolean lTrueNorth) {

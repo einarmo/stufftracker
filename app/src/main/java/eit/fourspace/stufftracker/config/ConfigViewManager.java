@@ -112,9 +112,5 @@ public class ConfigViewManager {
                 dataModel.getCameraRatio().removeObserver(this);
             }
         });
-
-        ImageView animTest = container.findViewById(R.id.image_test);
-        animTest.setBackgroundResource(R.drawable.ic_icon_loading_animated);
-        ((AnimatedVectorDrawable)animTest.getBackground()).start();
     }
 }
