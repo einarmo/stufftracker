@@ -7,4 +7,10 @@
     <string name="settings_header">Settings</string>
     <string name="show_all">Show all objects </string>
     <string name="true_north">Use true north </string>
+    <string name="camera_ratio">Camera multiplier, modify such that points are stationary compared to distant points when the device is rotated</string>
+    <string name="camera_ratio_hint">Camera multiplier</string>
+    <string name="filter_hint">Filter by name or identifier</string>
+    <string name="show_satellite">Show satellites</string>
+    <string name="show_rocket_body">Show rocket bodies</string>
+    <string name="show_debris">Show debris</string>
 </resources>

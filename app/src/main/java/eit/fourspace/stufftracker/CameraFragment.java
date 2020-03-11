@@ -46,7 +46,7 @@ import eit.fourspace.stufftracker.calculationflow.ObjectDataModel;
 import eit.fourspace.stufftracker.calculationflow.ObjectWrapper;
 import eit.fourspace.stufftracker.calculationflow.RotationSensorManager;
 import eit.fourspace.stufftracker.calculationflow.TLEManager;
-import eit.fourspace.stufftracker.config.ConfigDataModel;
+import eit.fourspace.stufftracker.config.ConfigData;
 
 
 public class CameraFragment extends Fragment {
@@ -108,7 +108,7 @@ public class CameraFragment extends Fragment {
         sensorManager = new RotationSensorManager(requireContext());
         locationManager = new LocationManager(requireContext());
         tleManager = new TLEManager(requireContext(), new ViewModelProvider(requireActivity()).get(ObjectDataModel.class).getDataManager().getValue(),
-                locationManager, new ViewModelProvider(requireActivity()).get(ConfigDataModel.class));
+                locationManager, new ViewModelProvider(requireActivity()).get(ConfigData.class));
     }
 
     @Override
@@ -119,7 +119,7 @@ public class CameraFragment extends Fragment {
         requireActivity().getWindowManager().getDefaultDisplay().getRealMetrics(dm);
         screenSize = new Size(dm.widthPixels, dm.heightPixels);
         View canvasView = view.findViewById(R.id.canvas_view);
-        itemRenderer = new ItemRenderer(requireContext(), tleManager, sensorManager, canvasView, new ViewModelProvider(requireActivity()).get(ConfigDataModel.class));
+        itemRenderer = new ItemRenderer(requireContext(), tleManager, sensorManager, canvasView, new ViewModelProvider(requireActivity()).get(ConfigData.class));
         touchListener = new OverlayTouchListener(tleManager, this);
         canvasView.setOnTouchListener(touchListener);
         return view;
@@ -260,6 +260,7 @@ public class CameraFragment extends Fragment {
             popup = new PopupWindow(
                     content, (int)(screenSize.getWidth()*0.9), (int)(screenSize.getHeight()*0.4)
             );
+            popup.setFocusable(true);
         } else {
             content = popup.getContentView();
         }

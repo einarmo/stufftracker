@@ -191,10 +191,12 @@ public class DataManager {
             AbsoluteDate current = new AbsoluteDate(new Date(), TimeScalesFactory.getUTC());
             Transform tf = TEME.getTransformTo(ITRF, current);
             for (int i = 0; i < propagators.length; i++) {
+                if (objects.get(i).filtered) continue;
                 currentCoordinates[i] = tf.transformPVCoordinates(propagators[i].getPVCoordinates(current));
             }
         } else {
             for (int i = 0; i < currentCoordinates.length; i++) {
+                if (objects.get(i).filtered) continue;
                 currentCoordinates[i] = currentCoordinates[i].shiftedBy(TLE_SIM_STEP);
             }
             // 60 seconds accumulates about ~8km error. Orbital velocity is about the same, so it shouldn't be any more noticeable.

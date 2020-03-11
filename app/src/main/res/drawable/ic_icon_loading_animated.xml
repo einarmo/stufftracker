@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_icon_loading">
+    <target
+        android:animation="@animator/point_rot"
+        android:name="points"/>
+    <target
+        android:animation="@animator/large_rot"
+        android:name="large"/>
+</animated-vector>

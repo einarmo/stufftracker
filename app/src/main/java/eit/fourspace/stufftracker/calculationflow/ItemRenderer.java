@@ -15,9 +15,7 @@ import org.orekit.time.AbsoluteDate;
 
 import java.util.ArrayList;
 
-import androidx.lifecycle.ViewModelProvider;
 import eit.fourspace.stufftracker.config.ConfigData;
-import eit.fourspace.stufftracker.config.ConfigDataModel;
 
 public class ItemRenderer {
     private TLEManager tleManager;
@@ -30,7 +28,7 @@ public class ItemRenderer {
 
     private Handler renderWorker;
 
-    private ConfigDataModel configDataModel;
+    private ConfigData configDataModel;
 
     private boolean paused;
 
@@ -63,11 +61,10 @@ public class ItemRenderer {
 
             if (objects.size() == 0) return;
 
-            ConfigData data = configDataModel.getDataManager().getValue();
 
             double cameraRatio = 1;
-            if (data != null) {
-                cameraRatio = data.getCameraRatio();
+            if (configDataModel != null && configDataModel.getCameraRatio().getValue() != null) {
+                cameraRatio = configDataModel.getCameraRatio().getValue();
             }
 
             rotationManager.getRotationMatrix(rotationMatrix);
@@ -107,7 +104,7 @@ public class ItemRenderer {
         }
     };
 
-    public ItemRenderer(Context context, TLEManager tleManager, RotationSensorManager rotationManager, View canvasView, ConfigDataModel configDataModel) {
+    public ItemRenderer(Context context, TLEManager tleManager, RotationSensorManager rotationManager, View canvasView, ConfigData configDataModel) {
         this.tleManager = tleManager;
         this.rotationManager = rotationManager;
         this.canvasView = canvasView;

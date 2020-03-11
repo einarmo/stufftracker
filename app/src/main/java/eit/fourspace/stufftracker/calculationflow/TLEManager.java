@@ -8,24 +8,19 @@ import android.util.Log;
 
 import org.hipparchus.geometry.euclidean.threed.Rotation;
 import org.hipparchus.geometry.euclidean.threed.RotationConvention;
-import org.hipparchus.geometry.euclidean.threed.RotationOrder;
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
 import org.hipparchus.util.FastMath;
 import org.orekit.bodies.GeodeticPoint;
-import org.orekit.frames.FramesFactory;
 import org.orekit.frames.TopocentricFrame;
 import org.orekit.frames.Transform;
 import org.orekit.models.earth.ReferenceEllipsoid;
 import org.orekit.time.AbsoluteDate;
 import org.orekit.time.TimeScalesFactory;
-import org.orekit.utils.IERSConventions;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 import eit.fourspace.stufftracker.config.ConfigData;
-import eit.fourspace.stufftracker.config.ConfigDataModel;
 
 public class TLEManager {
     private boolean paused = false;
@@ -36,9 +31,16 @@ public class TLEManager {
     private LocationManager locManager;
     private final double[] locationVector = new double[3];
 
-    private ConfigDataModel configDataModel;
+    private ConfigData configDataModel;
 
     private ReferenceEllipsoid earth = null;
+    private boolean filterChanged = false;
+    private boolean filterReset = false;
+    private boolean showSatellites = true;
+    private boolean showRocketBodies = true;
+    private boolean showDebris = true;
+    private String filter = "";
+    private String[] splitFilter;
 
     private Runnable tleRunnable = new Runnable() {
         @Override
@@ -55,9 +57,8 @@ public class TLEManager {
                 Vector3D[] positions = dataManager.getPositions();
 
                 boolean showAll = false;
-                ConfigData configData = configDataModel.getDataManager().getValue();
-                if (configData != null) {
-                    showAll = configData.getShowAll();
+                if (configDataModel != null && configDataModel.getShowAll().getValue() != null) {
+                    showAll = configDataModel.getShowAll().getValue();
                 }
 
                 ArrayList<ObjectWrapper> objects = dataManager.objects;
@@ -72,33 +73,73 @@ public class TLEManager {
 
                 Transform tf = dataManager.ITRF.getTransformTo(localFrame, date);
 
-                if (configData != null && configData.getTrueNorth()) {
+                if (configDataModel != null && configDataModel.getTrueNorth().getValue() != null && configDataModel.getTrueNorth().getValue()) {
                     double geoMagAngle = new GeomagneticField((float)locationVector[0], (float)locationVector[1], (float)locationVector[2], rawDate.getTime()).getDeclination();
                     Rotation rot = new Rotation(new Vector3D(0, 0, 1), FastMath.toRadians(geoMagAngle), RotationConvention.FRAME_TRANSFORM);
                     tf = new Transform(date, tf, new Transform(date, rot));
                 }
 
                 for (int i = 0; i < positions.length; i++) {
-                    ObjectWrapper obj = dataManager.objects.get(i);
+                    ObjectWrapper obj = objects.get(i);
+                    if (filterChanged && (filterReset || !obj.filtered)) {
+                        boolean filter =
+                                !showSatellites && obj.objectClass == ObjectClass.PAYLOAD
+                                || !showRocketBodies && obj.objectClass == ObjectClass.ROCKET_BODY
+                                || !showDebris && (obj.objectClass == ObjectClass.DEBRIS || obj.objectClass == ObjectClass.UNKNOWN);
+                        if (!filter && splitFilter != null && splitFilter.length != 0) {
+                            for (String s : splitFilter) {
+                                if (s.equals("")) continue;
+                                if (!obj.name.toLowerCase().contains(s) && !obj.designation.toLowerCase().contains(s)) {
+                                    filter = true;
+                                    break;
+                                }
+                            }
+                        }
+                        obj.filtered = filter;
+                    }
+                    if (obj.filtered) continue;
                     obj.position = tf.transformPosition(positions[i]);
                     obj.baseVisible = showAll || obj.objectClass == ObjectClass.STATION || obj.position.getZ() > 0;
                     //if (obj.position.getZ() > 0 && Math.abs(obj.position.getX()) < 100000 && Math.abs(obj.position.getY()) < 100000) {
                     //    Log.w(TAG, "OVERHEAD: " + obj.name + ", " + obj.position.toString());
                     //}
                 }
+                filterChanged = false;
+                filterReset = false;
                 // Log.w(TAG, "TLE Calculations took " + TimeUnit.MILLISECONDS.convert(end.getTime() - start.getTime(), TimeUnit.MILLISECONDS) + " milliseconds");
                 // TODO: filtering
             }
         }
     };
 
-    public TLEManager(Context context, DataManager dataManager, LocationManager locManager, ConfigDataModel configDataModel) {
+    public TLEManager(Context context, DataManager dataManager, LocationManager locManager, ConfigData configDataModel) {
         this.dataManager = dataManager;
         this.locManager = locManager;
         HandlerThread tleWorkerThread = new HandlerThread("TLEWorker", 5);
         tleWorkerThread.start();
         tleWorker = new Handler(tleWorkerThread.getLooper());
         this.configDataModel = configDataModel;
+        configDataModel.getFilter().observeForever(val -> {
+            filterReset |= (filter.indexOf(val) != 0 || val.equals(""));
+            filterChanged |= !filter.equals(val);
+            filter = val.toLowerCase();
+            splitFilter = filter.split(" ");
+        });
+        configDataModel.getShowSatellite().observeForever(val -> {
+            filterChanged |= val != showSatellites;
+            filterReset |= val && !showSatellites;
+            showSatellites = val;
+        });
+        configDataModel.getShowRocketBody().observeForever(val -> {
+            filterChanged |= val != showRocketBodies;
+            filterReset |= val && !showRocketBodies;
+            showRocketBodies = val;
+        });
+        configDataModel.getShowDebris().observeForever(val -> {
+            filterChanged |= val != showDebris;
+            filterReset |= val && !showDebris;
+            showDebris = val;
+        });
     }
 
     public void onPause() {

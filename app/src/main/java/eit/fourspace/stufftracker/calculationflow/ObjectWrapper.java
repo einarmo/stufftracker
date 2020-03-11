@@ -6,8 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class ObjectWrapper {
     public final String name;
+    public final String designation;
     public ObjectClass objectClass;
-    // Relative position in Topocentric Frame
+    // Relative position in Magnetic/True north Topocentric Frame
     public Vector3D position;
     // Relative position in android rotated frame
     public Vector3D rotatedPosition;
@@ -41,6 +42,7 @@ public class ObjectWrapper {
                 objectClass = ObjectClass.UNKNOWN;
                 break;
         }
+        this.designation = designation;
         if (designation.length() < 4) {
             launchYear = designation;
             launchPart = "";

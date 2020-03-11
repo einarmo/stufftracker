@@ -1,7 +1,7 @@
 package eit.fourspace.stufftracker.config;
 
+import android.app.Application;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -14,19 +14,29 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 
-public class ConfigData {
-    public String filterString;
-    private double cameraRatio;
-    private boolean showAll;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+
+public class ConfigData extends AndroidViewModel {
+    private final MutableLiveData<String> filterString = new MutableLiveData<>("");
+    private final MutableLiveData<Double> cameraRatio = new MutableLiveData<>(null);
+    private final MutableLiveData<Boolean> showAll = new MutableLiveData<>(null);
     private Context context;
-    private boolean trueNorth;
+    private final MutableLiveData<Boolean> trueNorth = new MutableLiveData<>(null);
+    private final MutableLiveData<Boolean> ready = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> showSatellite = new MutableLiveData<>(true);
+    private final MutableLiveData<Boolean> showRocketBody = new MutableLiveData<>(true);
+    private final MutableLiveData<Boolean> showDebris = new MutableLiveData<>(true);
     private static final String TAG = "CONFIG_DATA";
 
-    ConfigData(Context context) {
+    public ConfigData(Application context) {
+        super(context);
         this.context = context;
+        Init();
     }
 
-    void Init() {
+    private void Init() {
         AsyncTask.execute(() -> {
             JSONObject data;
             try {
@@ -55,30 +65,37 @@ public class ConfigData {
                 data = null;
             }
             if (data == null) {
-                filterString = "";
-                cameraRatio = 1;
-                showAll = false;
-                trueNorth = false;
-                SaveData(context);
+                filterString.postValue("");
+                cameraRatio.postValue(1.0);
+                showAll.postValue(false);
+                trueNorth.postValue(true);
+                ready.postValue(true);
+                SaveData(context, 1.0, false, true);
             } else {
-                filterString = "";
+                filterString.postValue("");
                 try {
-                    cameraRatio = data.getDouble("cameraRatio");
-                    showAll = data.getBoolean("showAll");
-                    trueNorth = data.getBoolean("trueNorth");
+                    double lCameraRatio = data.getDouble("cameraRatio");
+                    boolean lShowAll = data.getBoolean("showAll");
+                    boolean lTrueNorth = data.getBoolean("trueNorth");
+                    cameraRatio.postValue(lCameraRatio);
+                    showAll.postValue(lShowAll);
+                    trueNorth.postValue(lTrueNorth);
+                    ready.postValue(true);
+                    Log.w(TAG, "Read data: " + lCameraRatio + ", " + lShowAll + "; " + lTrueNorth);
                 } catch (JSONException e) {
-                    cameraRatio = 1;
-                    showAll = false;
+                    cameraRatio.postValue(1.0);
+                    showAll.postValue(false);
+                    trueNorth.postValue(true);
                 }
             }
         });
     }
-    private synchronized void SaveData(Context context) {
+    private synchronized void SaveData(Context context, Double lCameraRatio, Boolean lShowAll, Boolean lTrueNorth) {
         JSONObject data = new JSONObject();
         try {
-            data.put("cameraRatio", cameraRatio);
-            data.put("showAll", showAll);
-            data.put("trueNorth", trueNorth);
+            data.put("cameraRatio", lCameraRatio == null ? cameraRatio.getValue() : lCameraRatio);
+            data.put("showAll", lShowAll == null ? showAll.getValue() : lShowAll);
+            data.put("trueNorth", lTrueNorth == null ? trueNorth.getValue() : lTrueNorth);
             OutputStreamWriter writer = new OutputStreamWriter(context.openFileOutput("config.json", Context.MODE_PRIVATE));
             writer.write(data.toString());
             writer.flush();
@@ -92,25 +109,52 @@ public class ConfigData {
         }
     }
 
-    public void setCameraRatio(double nRatio) {
-        cameraRatio = nRatio;
-        AsyncTask.execute(() -> SaveData(context));
+    void setCameraRatio(double nRatio) {
+        cameraRatio.postValue(nRatio);
+        AsyncTask.execute(() -> SaveData(context, nRatio, null ,null));
     }
-    public double getCameraRatio() {
+    public LiveData<Double> getCameraRatio() {
         return cameraRatio;
     }
-    public void setShowAll(boolean nShowAll) {
-        showAll = nShowAll;
-        AsyncTask.execute(() -> SaveData(context));
+    void setShowAll(boolean nShowAll) {
+        showAll.postValue(nShowAll);
+        AsyncTask.execute(() -> SaveData(context, null, nShowAll, null));
     }
-    public boolean getShowAll() {
+    public LiveData<Boolean> getShowAll() {
         return showAll;
     }
-    public void setTrueNorth(boolean nTrueNorth) {
-        trueNorth = nTrueNorth;
-        AsyncTask.execute(() -> SaveData(context));
+     void setTrueNorth(boolean nTrueNorth) {
+        trueNorth.postValue(nTrueNorth);
+        AsyncTask.execute(() -> SaveData(context, null, null, nTrueNorth));
     }
-    public boolean getTrueNorth() {
+    public LiveData<Boolean> getTrueNorth() {
         return trueNorth;
+    }
+     void setFilter(String filter) {
+        filterString.postValue(filter);
+    }
+    public LiveData<String> getFilter() {
+        return filterString;
+    }
+    public LiveData<Boolean> getReady() {
+        return ready;
+    }
+    void setShowRocketBody(boolean nShowRocketBody) {
+        showRocketBody.postValue(nShowRocketBody);
+    }
+    public LiveData<Boolean> getShowRocketBody() {
+        return showRocketBody;
+    }
+    void setShowSatelite(boolean nShowSatellite) {
+        showSatellite.postValue(nShowSatellite);
+    }
+    public LiveData<Boolean> getShowSatellite() {
+        return showSatellite;
+    }
+    void setShowDebris(boolean nShowDebris) {
+        showDebris.postValue(nShowDebris);
+    }
+    public LiveData<Boolean> getShowDebris() {
+        return showDebris;
     }
 }

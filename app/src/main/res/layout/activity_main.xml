@@ -19,31 +19,80 @@
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
+        android:focusable="true"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:fitsSystemWindows="false"
         app:headerLayout="@layout/options_header">
+
         <LinearLayout
             android:id="@+id/config_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@android:color/darker_gray"
             android:orientation="vertical">
             <include layout="@layout/options_header" />
-            <Switch
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/show_all"
-                android:id="@id/show_all"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"/>
-            <Switch
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/true_north"
-                android:id="@+id/true_north"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"/>
+
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:paddingTop="5dp"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:stretchColumns="1">
+
+                <TableRow>
+                    <TextView android:text="@string/show_all" />
+                    <Switch android:id="@id/show_all" />
+                </TableRow>
+                <TableRow>
+                    <TextView android:text="@string/true_north" />
+                    <Switch android:id="@+id/true_north" />
+                </TableRow>
+                <TableRow>
+                    <TextView android:text="@string/camera_ratio"
+                        android:layout_height="wrap_content"
+                        android:singleLine="false"
+                        android:layout_span="2"/>
+                </TableRow>
+                <TableRow>
+                    <EditText
+                        android:id="@+id/camera_ratio"
+                        android:inputType="numberDecimal"
+                        android:layout_span="2"
+                        android:hint="@string/camera_ratio_hint"/>
+
+                </TableRow>
+                <TableRow>
+                    <EditText
+                        android:id="@+id/filter_text"
+                        android:inputType="text"
+                        android:layout_span="2"
+                        android:hint="@string/filter_hint" />
+                </TableRow>
+                <TableRow>
+                    <TextView android:text="@string/show_satellite" />
+                    <Switch android:id="@+id/show_satellite"
+                        android:checked="true" />
+                </TableRow>
+                <TableRow>
+                    <TextView android:text="@string/show_rocket_body" />
+                    <Switch android:id="@+id/show_rocket_body"
+                        android:checked="true" />
+                </TableRow>
+                <TableRow>
+                    <TextView android:text="@string/show_debris" />
+                    <Switch android:id="@+id/show_debris"
+                        android:checked="true"/>
+                </TableRow>
+            </TableLayout>
+        <ImageView
+            android:background="@android:color/darker_gray"
+            android:id="@+id/image_test"
+            android:layout_width="150dp"
+            android:layout_height="150dp" />
         </LinearLayout>
     </com.google.android.material.navigation.NavigationView>
 
