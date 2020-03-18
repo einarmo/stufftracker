@@ -8,12 +8,14 @@ import android.view.Surface;
 import android.view.View;
 
 import org.hipparchus.geometry.euclidean.threed.Rotation;
+import org.hipparchus.geometry.euclidean.threed.Vector3D;
 import org.hipparchus.geometry.euclidean.twod.Vector2D;
 import org.hipparchus.linear.Array2DRowRealMatrix;
 import org.orekit.frames.Transform;
 import org.orekit.time.AbsoluteDate;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import eit.fourspace.stufftracker.config.ConfigData;
 
@@ -78,31 +80,49 @@ public class ItemRenderer {
                 obj.visible = obj.rotatedPosition.getZ() < 0;
                 if (!obj.visible || obj.filtered) continue;
 
-                double z0 = obj.rotatedPosition.getZ();
-                double y0 = obj.rotatedPosition.getY();
-                double x0 = obj.rotatedPosition.getX();
+                obj.projection = project(obj.rotatedPosition, cameraRatio);
 
-                switch (orientation) {
-                    case Surface.ROTATION_0:
-                        obj.projection = new Vector2D((width/2 - x0/z0*scale)*scale2*cameraRatio + xshift, (height/2 + y0/z0*scale)*scale2*cameraRatio + yshift);
-                        break;
-                    case Surface.ROTATION_90:
-                        obj.projection = new Vector2D((height/2 + y0/z0*scale)*scale2*cameraRatio + yshift, (width/2 + x0/z0*scale)*scale2*cameraRatio + xshift);
-                        break;
-                    case Surface.ROTATION_180:
-                        obj.projection = new Vector2D((width/2 + x0/z0*scale)*scale2*cameraRatio + xshift, (height/2 - y0/z0*scale)*scale2*cameraRatio + yshift);
-                        break;
-                    case Surface.ROTATION_270:
-                        obj.projection = new Vector2D((height/2 - y0/z0*scale)*scale2*cameraRatio + yshift, (width/2 - x0/z0*scale)*scale2*cameraRatio + xshift);
-                        break;
-                }
             }
 
+            LinkedList<OrbitWrapper> orbits = tleManager.getOrbits();
 
+            for (int i = 0; i < orbits.size(); i++) {
+                OrbitWrapper orbit = orbits.get(i);
+                if (orbit.obj.filtered || !orbit.initialized) {
+                    continue;
+                }
+                for (int j = 0; j < OrbitWrapper.NUM_POINTS; j++) {
+                    orbit.rotatedPositions[j] = tf.transformPosition(orbit.transformedPositions[j]);
+                    if (orbit.rotatedPositions[j].getZ() >= 0) {
+                        orbit.projections[j] = new Vector2D(-10, -10);
+                        continue;
+                    }
+                    orbit.projections[j] = project(orbit.rotatedPositions[j], cameraRatio);
+                }
+                orbit.rendered = true;
+            }
 
             canvasView.invalidate();
         }
     };
+
+    private Vector2D project(Vector3D pos, double cameraRatio) {
+        double z0 = pos.getZ();
+        double y0 = pos.getY();
+        double x0 = pos.getX();
+
+        switch (orientation) {
+            case Surface.ROTATION_0:
+                return new Vector2D((width/2 - x0/z0*scale)*scale2*cameraRatio + xshift, (height/2 + y0/z0*scale)*scale2*cameraRatio + yshift);
+            case Surface.ROTATION_90:
+                return new Vector2D((height/2 + y0/z0*scale)*scale2*cameraRatio + yshift, (width/2 + x0/z0*scale)*scale2*cameraRatio + xshift);
+            case Surface.ROTATION_180:
+                return new Vector2D((width/2 + x0/z0*scale)*scale2*cameraRatio + xshift, (height/2 - y0/z0*scale)*scale2*cameraRatio + yshift);
+            case Surface.ROTATION_270:
+                return new Vector2D((height/2 - y0/z0*scale)*scale2*cameraRatio + yshift, (width/2 - x0/z0*scale)*scale2*cameraRatio + xshift);
+        }
+        return new Vector2D(0, 0);
+    }
 
     public ItemRenderer(Context context, TLEManager tleManager, RotationSensorManager rotationManager, View canvasView, ConfigData configDataModel) {
         this.tleManager = tleManager;
@@ -134,4 +154,5 @@ public class ItemRenderer {
     public ArrayList<ObjectWrapper> getObjects() {
         return tleManager.getObjects();
     }
+    public LinkedList<OrbitWrapper> getOrbits() { return tleManager.getOrbits(); }
 }

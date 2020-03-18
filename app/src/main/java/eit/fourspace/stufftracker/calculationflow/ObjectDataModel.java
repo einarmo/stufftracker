@@ -15,32 +15,21 @@ public class ObjectDataModel extends AndroidViewModel {
     private final MutableLiveData<DataManager> dataManager = new MutableLiveData<>();
     private final MutableLiveData<Boolean> ready = new MutableLiveData<>();
 
-    private Handler asyncMessageHandler;
-
     public ObjectDataModel(Application context) {
         super(context);
         ready.setValue(null);
-        asyncMessageHandler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(@NonNull Message message) {
-                switch(message.what) {
-                    case DataManager.TLE_DATA_NOT_AVAILABLE:
-                        ready.postValue(false);
-                        break;
-                    case DataManager.TLE_DATA_READY:
-                        ready.postValue(true);
-                        break;
-                    default:
-                        super.handleMessage(message);
-                }
-            }
-        };
-        dataManager.setValue(new DataManager(context, asyncMessageHandler));
+
     }
     public LiveData<DataManager> getDataManager() {
         return dataManager;
     }
     public LiveData<Boolean> getReady() {
         return ready;
+    }
+    public void setDataManager(DataManager manager) {
+        dataManager.setValue(manager);
+    }
+    public void setReady(boolean nReady) {
+        ready.postValue(nReady);
     }
 }

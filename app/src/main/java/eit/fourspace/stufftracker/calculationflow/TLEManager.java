@@ -19,6 +19,7 @@ import org.orekit.time.TimeScalesFactory;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 
 import eit.fourspace.stufftracker.config.ConfigData;
 
@@ -41,6 +42,7 @@ public class TLEManager {
     private boolean showDebris = true;
     private String filter = "";
     private String[] splitFilter;
+    private LinkedList<OrbitWrapper> orbits = new LinkedList<>();
 
     private Runnable tleRunnable = new Runnable() {
         @Override
@@ -106,8 +108,18 @@ public class TLEManager {
                 }
                 filterChanged = false;
                 filterReset = false;
+
+                for (int i = 0; i < orbits.size(); i++) {
+                    OrbitWrapper orbit = orbits.get(i);
+                    if (!orbit.initialized) {
+                        dataManager.initializeOrbit(orbit);
+                    }
+                    for (int j = 0; j < OrbitWrapper.NUM_POINTS; j++) {
+                        orbit.transformedPositions[j] = tf.transformPosition(orbit.positions[j]);
+                    }
+                    orbit.initialized = true;
+                }
                 // Log.w(TAG, "TLE Calculations took " + TimeUnit.MILLISECONDS.convert(end.getTime() - start.getTime(), TimeUnit.MILLISECONDS) + " milliseconds");
-                // TODO: filtering
             }
         }
     };
@@ -155,5 +167,28 @@ public class TLEManager {
 
     public ArrayList<ObjectWrapper> getObjects() {
         return dataManager.objects;
+    }
+    public LinkedList<OrbitWrapper> getOrbits() { return orbits; }
+    public void removeOrbit(ObjectWrapper wrapper) {
+        OrbitWrapper toRemove = null;
+        for (int i = 0; i < orbits.size(); i++) {
+            if (wrapper == orbits.get(i).obj) {
+                toRemove = orbits.get(i);
+            }
+        }
+        if (toRemove == null) return;
+        orbits.remove(toRemove);
+    }
+    public void addOrbit(ObjectWrapper wrapper) {
+        OrbitWrapper old = null;
+        for (int i = 0; i < orbits.size(); i++) {
+            if (wrapper == orbits.get(i).obj) {
+                old = orbits.get(i);
+            }
+        }
+        if (old != null) {
+            orbits.remove(old);
+        }
+        orbits.add(new OrbitWrapper(wrapper));
     }
 }

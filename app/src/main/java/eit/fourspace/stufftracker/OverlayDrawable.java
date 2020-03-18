@@ -7,13 +7,19 @@ import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import androidx.annotation.NonNull;
 import eit.fourspace.stufftracker.calculationflow.ItemRenderer;
 import eit.fourspace.stufftracker.calculationflow.ObjectWrapper;
+import eit.fourspace.stufftracker.calculationflow.OrbitWrapper;
+
+import static eit.fourspace.stufftracker.calculationflow.ObjectClass.PAYLOAD;
+import static eit.fourspace.stufftracker.calculationflow.ObjectClass.ROCKET_BODY;
+import static eit.fourspace.stufftracker.calculationflow.ObjectClass.STATION;
 
 public class OverlayDrawable extends Drawable {
-    private Paint redPaint, greenPaint, greyPaint, yellowPaint;
+    private Paint redPaint, greenPaint, greyPaint, yellowPaint, bluePaint;
     private ItemRenderer renderer;
     public static final String TAG = "OverlayDrawable";
     private static final int BASE_RADIUS = 15;
@@ -28,6 +34,8 @@ public class OverlayDrawable extends Drawable {
         greyPaint.setARGB(125, 175, 175, 175);
         yellowPaint = new Paint();
         yellowPaint.setARGB(125, 175, 175, 0);
+        bluePaint = new Paint();
+        bluePaint.setARGB(125, 0, 0, 175);
     }
 
     @Override
@@ -61,6 +69,20 @@ public class OverlayDrawable extends Drawable {
                 roundPaint.setStyle(Paint.Style.STROKE);
                 roundPaint.setStrokeWidth(4);
                 canvas.drawCircle((float)obj.projection.getX(), (float)obj.projection.getY(), radius+6, roundPaint);
+            }
+        }
+        LinkedList<OrbitWrapper> orbits = renderer.getOrbits();
+        for (OrbitWrapper orbit : orbits) {
+            if (!orbit.initialized || !orbit.rendered) continue;
+            Paint paint = bluePaint;
+            paint.setStrokeWidth(4);
+            for (int j = 0; j < OrbitWrapper.NUM_POINTS; j++) {
+                if (orbit.rotatedPositions[j].getZ() >= 0 || orbit.rotatedPositions[(j + 1) % OrbitWrapper.NUM_POINTS].getZ() >= 0) continue;
+                canvas.drawLine((float)orbit.projections[j].getX(),
+                        (float)orbit.projections[j].getY(),
+                        (float)orbit.projections[(j+1) % OrbitWrapper.NUM_POINTS].getX(),
+                        (float)orbit.projections[(j+1) % OrbitWrapper.NUM_POINTS].getY(),
+                        paint);
             }
         }
     }

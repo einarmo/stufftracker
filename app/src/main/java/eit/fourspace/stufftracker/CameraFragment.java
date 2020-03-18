@@ -246,11 +246,9 @@ public class CameraFragment extends Fragment {
             return;
         }
 
-        //if (popup != null) {
-        //    popup.dismiss();
-        //}
         if (selectedWrapper != null) {
             selectedWrapper.selected = false;
+            tleManager.removeOrbit(selectedWrapper);
         }
 
         View content;
@@ -272,10 +270,17 @@ public class CameraFragment extends Fragment {
         closeButton.setClickable(true);
 
         selectedWrapper = wrapper;
+        tleManager.addOrbit(wrapper);
         selectedWrapper.selected = true;
 
         closeButton.setOnClickListener(view -> {
+            tleManager.removeOrbit(wrapper);
             popup.dismiss();
+            listener.visible = false;
+            wrapper.selected = false;
+        });
+        popup.setOnDismissListener(() -> {
+            tleManager.removeOrbit(wrapper);
             listener.visible = false;
             wrapper.selected = false;
         });
@@ -291,7 +296,12 @@ public class CameraFragment extends Fragment {
         popup.dismiss();
         listener.visible = false;
         if (selectedWrapper != null) {
+            Log.w(TAG, "Dismiss wrapper");
             selectedWrapper.selected = false;
+            tleManager.removeOrbit(selectedWrapper);
+            selectedWrapper = null;
+        } else {
+            Log.w(TAG, "Selected wrapper is null");
         }
     }
 

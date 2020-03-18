@@ -1,13 +1,18 @@
 package eit.fourspace.stufftracker;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProvider;
+import eit.fourspace.stufftracker.calculationflow.DataManager;
 import eit.fourspace.stufftracker.calculationflow.ObjectDataModel;
 import eit.fourspace.stufftracker.config.ConfigData;
 import eit.fourspace.stufftracker.config.ConfigViewManager;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -33,8 +38,26 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
 
         ViewModelProvider provider = new ViewModelProvider(this);
 
-        provider.get(ObjectDataModel.class);
+        ObjectDataModel dataModel = provider.get(ObjectDataModel.class);
+
+        Handler asyncMessageHandler = new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(@NonNull Message message) {
+                switch(message.what) {
+                    case DataManager.TLE_DATA_NOT_AVAILABLE:
+                        dataModel.setReady(false);
+                        break;
+                    case DataManager.TLE_DATA_READY:
+                        dataModel.setReady(true);
+                        break;
+                    default:
+                        super.handleMessage(message);
+                }
+            }
+        };
+
         ConfigData configDataModel = provider.get(ConfigData.class);
+        dataModel.setDataManager(new DataManager(this, asyncMessageHandler, configDataModel));
 
         NavigationView navigationView = findViewById(R.id.nav_view);
         if (navigationView != null) {

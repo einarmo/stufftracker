@@ -25,6 +25,7 @@ public class ObjectWrapper {
     public boolean filtered;
     public boolean baseVisible;
     public boolean selected;
+    public boolean invalid;
 
     ObjectWrapper(String name, String type, String designation) {
         this.name = name;

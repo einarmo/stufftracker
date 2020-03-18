@@ -42,14 +42,13 @@ public class OverlayTouchListener implements View.OnTouchListener {
             Collections.sort(hits, (o1, o2) -> (int)(o1.projection.getNorm() - o2.projection.getNorm()));
             ObjectWrapper hit = hits.getFirst();
             Log.w(TAG, hit.name);
-            hit.selected = true;
             root.showPopup(hit, this);
             visible = true;
         } else {
             Log.w(TAG, "No hits: " + x + ", " + y);
             root.dismissPopup(this);
         }
-
+        v.performClick();
         return true;
     }
 }

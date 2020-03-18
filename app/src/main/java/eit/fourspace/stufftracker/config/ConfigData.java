@@ -28,6 +28,7 @@ public class ConfigData extends AndroidViewModel {
     private final MutableLiveData<Boolean> showSatellite = new MutableLiveData<>(true);
     private final MutableLiveData<Boolean> showRocketBody = new MutableLiveData<>(true);
     private final MutableLiveData<Boolean> showDebris = new MutableLiveData<>(true);
+    private final MutableLiveData<Integer> fileNo = new MutableLiveData<>(null);
     private static final String TAG = "CONFIG_DATA";
 
     public ConfigData(Application context) {
@@ -71,35 +72,47 @@ public class ConfigData extends AndroidViewModel {
                 cameraRatio.postValue(1.0);
                 showAll.postValue(false);
                 trueNorth.postValue(true);
+                fileNo.postValue(0);
                 ready.postValue(true);
-                SaveData(context, 1.0, false, true);
+                SaveData(context, 1.0, false, true, 0);
             } else {
                 filterString.postValue("");
                 try {
                     double lCameraRatio = data.getDouble("cameraRatio");
-                    boolean lShowAll = data.getBoolean("showAll");
-                    boolean lTrueNorth = data.getBoolean("trueNorth");
                     cameraRatio.postValue(lCameraRatio);
-                    showAll.postValue(lShowAll);
-                    trueNorth.postValue(lTrueNorth);
-                    ready.postValue(true);
-                    Log.w(TAG, "Read data: " + lCameraRatio + ", " + lShowAll + "; " + lTrueNorth);
-                } catch (JSONException e) {
+                } catch (JSONException ignore) {
                     cameraRatio.postValue(1.0);
+                }
+                try {
+                    boolean lShowAll = data.getBoolean("showAll");
+                    showAll.postValue(lShowAll);
+                } catch (JSONException e) {
                     showAll.postValue(false);
+                }
+                try {
+                    boolean lTrueNorth = data.getBoolean("trueNorth");
+                    trueNorth.postValue(lTrueNorth);
+                } catch (JSONException e) {
                     trueNorth.postValue(true);
+                }
+                try {
+                    int lFileNo = data.getInt("fileNo");
+                    fileNo.postValue(lFileNo);
+                } catch (JSONException e) {
+                    fileNo.postValue(0);
                 }
             }
             ready.postValue(true);
             Log.w(TAG, "Finish load config");
         });
     }
-    private synchronized void SaveData(Context context, Double lCameraRatio, Boolean lShowAll, Boolean lTrueNorth) {
+    private synchronized void SaveData(Context context, Double lCameraRatio, Boolean lShowAll, Boolean lTrueNorth, Integer lFileNo) {
         JSONObject data = new JSONObject();
         try {
             data.put("cameraRatio", lCameraRatio == null ? cameraRatio.getValue() : lCameraRatio);
             data.put("showAll", lShowAll == null ? showAll.getValue() : lShowAll);
             data.put("trueNorth", lTrueNorth == null ? trueNorth.getValue() : lTrueNorth);
+            data.put("fileNo", lFileNo == null ? fileNo.getValue() : lFileNo);
             OutputStreamWriter writer = new OutputStreamWriter(context.openFileOutput("config.json", Context.MODE_PRIVATE));
             writer.write(data.toString());
             writer.flush();
@@ -115,21 +128,21 @@ public class ConfigData extends AndroidViewModel {
 
     void setCameraRatio(double nRatio) {
         cameraRatio.postValue(nRatio);
-        AsyncTask.execute(() -> SaveData(context, nRatio, null ,null));
+        AsyncTask.execute(() -> SaveData(context, nRatio, null ,null, null));
     }
     public LiveData<Double> getCameraRatio() {
         return cameraRatio;
     }
     void setShowAll(boolean nShowAll) {
         showAll.postValue(nShowAll);
-        AsyncTask.execute(() -> SaveData(context, null, nShowAll, null));
+        AsyncTask.execute(() -> SaveData(context, null, nShowAll, null, null));
     }
     public LiveData<Boolean> getShowAll() {
         return showAll;
     }
      void setTrueNorth(boolean nTrueNorth) {
         trueNorth.postValue(nTrueNorth);
-        AsyncTask.execute(() -> SaveData(context, null, null, nTrueNorth));
+        AsyncTask.execute(() -> SaveData(context, null, null, nTrueNorth, null));
     }
     public LiveData<Boolean> getTrueNorth() {
         return trueNorth;
@@ -160,5 +173,13 @@ public class ConfigData extends AndroidViewModel {
     }
     public LiveData<Boolean> getShowDebris() {
         return showDebris;
+    }
+    public void setFileNo(int nFileNo) {
+        fileNo.postValue(nFileNo);
+        Log.w(TAG, "Save file no: " + nFileNo);
+        AsyncTask.execute(() -> SaveData(context, null, null, null, nFileNo));
+    }
+    public LiveData<Integer> getFileNo() {
+        return fileNo;
     }
 }
