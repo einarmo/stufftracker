@@ -10,6 +10,7 @@ import org.hipparchus.geometry.euclidean.threed.Rotation;
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
 import org.hipparchus.geometry.euclidean.twod.Vector2D;
 import org.hipparchus.linear.Array2DRowRealMatrix;
+import org.hipparchus.util.FastMath;
 import org.orekit.frames.Transform;
 import org.orekit.time.AbsoluteDate;
 
@@ -33,6 +34,8 @@ public class ItemRenderer {
 
     private boolean paused;
 
+
+    public boolean pointToFav;
     public double width;
     public double height;
 
@@ -67,6 +70,11 @@ public class ItemRenderer {
             if (configDataModel != null && configDataModel.getCameraRatio().getValue() != null) {
                 cameraRatio = configDataModel.getCameraRatio().getValue();
             }
+            boolean pointFav = false;
+            if (configDataModel != null && configDataModel.getPointFav().getValue() != null) {
+                pointFav = configDataModel.getPointFav().getValue();
+                pointToFav = pointFav;
+            }
 
             rotationManager.getRotationMatrix(rotationMatrix);
             Transform tf = new Transform(AbsoluteDate.JAVA_EPOCH, new Rotation(rotationMatrix.getData(), 1e-4));
@@ -74,13 +82,13 @@ public class ItemRenderer {
             for (int i = 0; i < objects.size(); i++) {
                 ObjectWrapper obj = objects.get(i);
                 obj.visible = obj.baseVisible;
-                if (!obj.baseVisible || obj.filtered) continue;
+                if ((!obj.baseVisible || obj.filtered) && !(obj.favorite && pointFav)) continue;
+
                 obj.rotatedPosition = tf.transformPosition(obj.position);
                 obj.visible = obj.rotatedPosition.getZ() < 0;
-                if (!obj.visible || obj.filtered) continue;
+                if ((!obj.visible || obj.filtered) && !(obj.favorite && pointFav)) continue;
 
                 obj.projection = project(obj.rotatedPosition, cameraRatio);
-
             }
 
             LinkedList<OrbitWrapper> orbits = tleManager.getOrbits();
@@ -106,7 +114,7 @@ public class ItemRenderer {
     };
 
     private Vector2D project(Vector3D pos, double cameraRatio) {
-        double z0 = pos.getZ();
+        double z0 = -FastMath.abs(pos.getZ());
         double y0 = pos.getY();
         double x0 = pos.getX();
 

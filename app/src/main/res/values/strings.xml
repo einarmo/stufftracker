@@ -22,4 +22,5 @@
     <string name="altitude_desc">Altitude:</string>
     <string name="latitude_desc">Latitude</string>
     <string name="longitude_desc">Longitude:</string>
+    <string name="point_fav">Point to favorites:</string>
 </resources>

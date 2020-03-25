@@ -87,6 +87,11 @@
                         android:checked="true"/>
                 </TableRow>
                 <TableRow>
+                    <TextView android:text="@string/point_fav" />
+                    <ToggleButton android:id="@+id/point_fav"
+                        android:checked="true"/>
+                </TableRow>
+                <TableRow>
                     <Button
                         android:layout_span="2"
                         android:text="@string/clear_favorites"

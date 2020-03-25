@@ -33,6 +33,7 @@ public class ConfigData extends AndroidViewModel {
     private final MutableLiveData<Boolean> showDebris = new MutableLiveData<>(true);
     private final MutableLiveData<Integer> fileNo = new MutableLiveData<>(null);
     private final MutableLiveData<HashSet<String>> favorites = new MutableLiveData<>(null);
+    private final MutableLiveData<Boolean> favPoint = new MutableLiveData<>(null);
     private static final String TAG = "CONFIG_DATA";
 
     public ConfigData(Application context) {
@@ -78,7 +79,7 @@ public class ConfigData extends AndroidViewModel {
                 trueNorth.postValue(true);
                 fileNo.postValue(0);
                 ready.postValue(true);
-                SaveData(context, 1.0, false, true, 0);
+                SaveData(context, 1.0, false, true, 0, true);
             } else {
                 filterString.postValue("");
                 try {
@@ -106,6 +107,12 @@ public class ConfigData extends AndroidViewModel {
                     fileNo.postValue(0);
                 }
                 try {
+                    boolean lPointFav = data.getBoolean("pointFav");
+                    favPoint.postValue(lPointFav);
+                } catch (JSONException e) {
+                    favPoint.postValue(true);
+                }
+                try {
                     JSONArray lFavorites = data.getJSONArray("favorites");
                     HashSet<String> values = new HashSet<>();
                     for (int i = 0; i < lFavorites.length(); i++) {
@@ -124,13 +131,14 @@ public class ConfigData extends AndroidViewModel {
             Log.w(TAG, "Finish load config");
         });
     }
-    private synchronized void SaveData(Context context, Double lCameraRatio, Boolean lShowAll, Boolean lTrueNorth, Integer lFileNo) {
+    private synchronized void SaveData(Context context, Double lCameraRatio, Boolean lShowAll, Boolean lTrueNorth, Integer lFileNo, Boolean lPointFav) {
         JSONObject data = new JSONObject();
         try {
             data.put("cameraRatio", lCameraRatio == null ? cameraRatio.getValue() : lCameraRatio);
             data.put("showAll", lShowAll == null ? showAll.getValue() : lShowAll);
             data.put("trueNorth", lTrueNorth == null ? trueNorth.getValue() : lTrueNorth);
             data.put("fileNo", lFileNo == null ? fileNo.getValue() : lFileNo);
+            data.put("pointFav", lPointFav == null ? favPoint.getValue() : lPointFav);
             HashSet<String> lFavorites = favorites.getValue();
             data.put("favorites", lFavorites == null ? new JSONArray() : new JSONArray(lFavorites));
             OutputStreamWriter writer = new OutputStreamWriter(context.openFileOutput("config.json", Context.MODE_PRIVATE));
@@ -148,21 +156,21 @@ public class ConfigData extends AndroidViewModel {
 
     void setCameraRatio(double nRatio) {
         cameraRatio.postValue(nRatio);
-        AsyncTask.execute(() -> SaveData(context, nRatio, null ,null, null));
+        AsyncTask.execute(() -> SaveData(context, nRatio, null ,null, null, null));
     }
     public LiveData<Double> getCameraRatio() {
         return cameraRatio;
     }
     void setShowAll(boolean nShowAll) {
         showAll.postValue(nShowAll);
-        AsyncTask.execute(() -> SaveData(context, null, nShowAll, null, null));
+        AsyncTask.execute(() -> SaveData(context, null, nShowAll, null, null, null));
     }
     public LiveData<Boolean> getShowAll() {
         return showAll;
     }
      void setTrueNorth(boolean nTrueNorth) {
         trueNorth.postValue(nTrueNorth);
-        AsyncTask.execute(() -> SaveData(context, null, null, nTrueNorth, null));
+        AsyncTask.execute(() -> SaveData(context, null, null, nTrueNorth, null, null));
     }
     public LiveData<Boolean> getTrueNorth() {
         return trueNorth;
@@ -197,7 +205,7 @@ public class ConfigData extends AndroidViewModel {
     public void setFileNo(int nFileNo) {
         fileNo.postValue(nFileNo);
         Log.w(TAG, "Save file no: " + nFileNo);
-        AsyncTask.execute(() -> SaveData(context, null, null, null, nFileNo));
+        AsyncTask.execute(() -> SaveData(context, null, null, null, nFileNo, null));
     }
     public LiveData<Integer> getFileNo() {
         return fileNo;
@@ -208,7 +216,7 @@ public class ConfigData extends AndroidViewModel {
         if (favorites.getValue() == null) return;
         if (favorites.getValue().add(nFavorite)) {
             favorites.postValue(favorites.getValue());
-            AsyncTask.execute(() -> SaveData(context, null, null, null, null));
+            AsyncTask.execute(() -> SaveData(context, null, null, null, null, null));
         }
     }
 
@@ -216,13 +224,18 @@ public class ConfigData extends AndroidViewModel {
         if (favorites.getValue() == null) return;
         if (favorites.getValue().remove(nFavorite)) {
             favorites.postValue(favorites.getValue());
-            AsyncTask.execute(() -> SaveData(context, null, null, null, null));
+            AsyncTask.execute(() -> SaveData(context, null, null, null, null, null));
         }
     }
-    public void clearFavorites() {
+    void clearFavorites() {
         if (favorites.getValue() == null || favorites.getValue().size() == 0) return;
         favorites.getValue().clear();
         favorites.postValue(favorites.getValue());
-        AsyncTask.execute(() -> SaveData(context, null, null, null, null));
+        AsyncTask.execute(() -> SaveData(context, null, null, null, null, null));
+    }
+    public LiveData<Boolean> getPointFav() { return favPoint; }
+    void setPointFav(boolean nPointFav) {
+        favPoint.postValue(nPointFav);
+        AsyncTask.execute(() -> SaveData(context, null, null, null, null, nPointFav));
     }
 }

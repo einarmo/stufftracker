@@ -177,7 +177,7 @@ public class CameraFragment extends Fragment {
 
         ConstraintLayout container = (ConstraintLayout)view;
 
-        canvas = new OverlayDrawable(itemRenderer);
+        canvas = new OverlayDrawable(itemRenderer, configData);
         ImageView image = container.findViewById(R.id.canvas_view);
         image.setImageDrawable(canvas);
 

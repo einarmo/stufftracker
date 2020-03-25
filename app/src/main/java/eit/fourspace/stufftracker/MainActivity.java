@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
                     default:
                         super.handleMessage(message);
                 }
+                super.handleMessage(message);
             }
         };
 

@@ -1,14 +1,10 @@
 package eit.fourspace.stufftracker.config;
 
-import android.graphics.drawable.AnimatedVectorDrawable;
-import android.graphics.drawable.AnimationDrawable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.ToggleButton;
 
 import java.util.HashSet;
@@ -20,23 +16,19 @@ import eit.fourspace.stufftracker.calculationflow.DataManager;
 import eit.fourspace.stufftracker.calculationflow.ObjectDataModel;
 
 public class ConfigViewManager {
-    private ConfigData dataModel;
-    private LinearLayout container;
-    private ToggleButton showAll, trueNorth, showSatellites, showRocketBodies, showDebris;
+    private ToggleButton showAll, trueNorth, favPoint;
     private Button clearFavorites;
-    private EditText cameraRatio, filterString;
+    private EditText cameraRatio;
     public ConfigViewManager(ConfigData dataModel, ObjectDataModel objectDataModel, LinearLayout container) {
-        this.dataModel = dataModel;
-        this.container = container;
-
         showAll = container.findViewById(R.id.show_all);
         trueNorth = container.findViewById(R.id.true_north);
         cameraRatio = container.findViewById(R.id.camera_ratio);
-        showSatellites = container.findViewById(R.id.show_satellite);
-        showRocketBodies = container.findViewById(R.id.show_rocket_body);
-        showDebris = container.findViewById(R.id.show_debris);
-        filterString = container.findViewById(R.id.filter_text);
+        ToggleButton showSatellites = container.findViewById(R.id.show_satellite);
+        ToggleButton showRocketBodies = container.findViewById(R.id.show_rocket_body);
+        ToggleButton showDebris = container.findViewById(R.id.show_debris);
+        EditText filterString = container.findViewById(R.id.filter_text);
         clearFavorites = container.findViewById(R.id.clear_favorites);
+        favPoint = container.findViewById(R.id.point_fav);
 
         showAll.setOnCheckedChangeListener((view, active) -> {
             if (dataModel != null) {
@@ -61,6 +53,11 @@ public class ConfigViewManager {
         showDebris.setOnCheckedChangeListener((view, active) -> {
             if (dataModel != null) {
                 dataModel.setShowDebris(active);
+            }
+        });
+        favPoint.setOnCheckedChangeListener((view, active) -> {
+            if (dataModel != null) {
+                dataModel.setPointFav(active);
             }
         });
         clearFavorites.setOnClickListener(ignore -> {
@@ -135,6 +132,14 @@ public class ConfigViewManager {
         dataModel.getFavorites().observeForever(set -> {
             if (set == null) return;
             clearFavorites.setEnabled(set.size() > 0);
+        });
+        dataModel.getPointFav().observeForever(new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (aBoolean == null) return;
+                favPoint.setChecked(aBoolean);
+                dataModel.getPointFav().removeObserver(this);
+            }
         });
     }
 }
