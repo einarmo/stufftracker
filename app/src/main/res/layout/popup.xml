@@ -32,17 +32,14 @@
         android:contentDescription="@string/close"
         android:background="@android:color/transparent"
         android:id="@+id/close_button" />
-
     <TableLayout
+        app:layout_constraintTop_toBottomOf="@+id/nameText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         android:id="@+id/desc_layout"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:stretchColumns="1"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/nameText"
-        app:layout_constraintBottom_toBottomOf="parent"
-        >
+        android:layout_height="wrap_content"
+        android:stretchColumns="1">
         <TableRow>
             <TextView
                 android:id="@+id/launch_year_desc"
@@ -83,7 +80,7 @@
                 android:textColor="@android:color/white"
                 android:textSize="15sp" />
         </TableRow>
-        <TableRow>
+        <TableRow android:paddingTop="16dp">
             <TextView
                 android:id="@+id/elevation_desc"
                 android:text="@string/elevation_desc"
@@ -109,7 +106,73 @@
                 android:textColor="@android:color/white"
                 android:textSize="15sp" />
         </TableRow>
+        <TableRow android:paddingTop="20dp">
+            <TextView
+                android:id="@+id/velocity_desc"
+                android:text="@string/velocity_desc"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+            <TextView
+                android:paddingStart="10dp"
+                android:paddingEnd="0dp"
+                android:id="@+id/velocity"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+        </TableRow>
         <TableRow>
+            <TextView
+                android:id="@+id/eccentricity_desc"
+                android:text="@string/eccentricity_desc"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+            <TextView
+                android:paddingStart="10dp"
+                android:paddingEnd="0dp"
+                android:id="@+id/eccentricity"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+        </TableRow>
+        <TableRow android:paddingTop="20dp">
+            <TextView
+                android:id="@+id/latitude_desc"
+                android:text="@string/latitude_desc"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+            <TextView
+                android:paddingStart="10dp"
+                android:paddingEnd="0dp"
+                android:id="@+id/latitude"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+        </TableRow>
+
+        <TableRow>
+            <TextView
+                android:id="@+id/longitude_desc"
+                android:text="@string/longitude_desc"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+            <TextView
+                android:paddingStart="10dp"
+                android:paddingEnd="0dp"
+                android:id="@+id/longitude"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+        </TableRow>
+        <TableRow>
+            <TextView
+                android:id="@+id/altitude_desc"
+                android:text="@string/altitude_desc"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+            <TextView
+                android:paddingStart="10dp"
+                android:paddingEnd="0dp"
+                android:id="@+id/altitude"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+        </TableRow>
+        <TableRow android:paddingTop="20dp">
             <TextView
                 android:id="@+id/favorite_desc"
                 android:text="@string/favorite_desc"
@@ -119,7 +182,4 @@
                 android:id="@+id/favorite" />
         </TableRow>
     </TableLayout>
-
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>

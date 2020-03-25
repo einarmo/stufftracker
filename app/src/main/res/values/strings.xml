@@ -16,4 +16,10 @@
     <string name="elevation_desc">Elevation:</string>
     <string name="azimuth_desc">Azimuth:</string>
     <string name="favorite_desc">Favorite:</string>
+    <string name="clear_favorites">Clear favorites</string>
+    <string name="velocity_desc">Velocity:</string>
+    <string name="eccentricity_desc">Eccentricity:</string>
+    <string name="altitude_desc">Altitude:</string>
+    <string name="latitude_desc">Latitude</string>
+    <string name="longitude_desc">Longitude:</string>
 </resources>

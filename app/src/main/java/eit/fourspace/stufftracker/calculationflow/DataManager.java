@@ -35,6 +35,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +58,7 @@ public class DataManager {
     private Vector3D[] currentVectors;
     private ConfigData config;
     private Handler asyncMessageHandler;
-    ArrayList<ObjectWrapper> objects = new ArrayList<>();
+    public ArrayList<ObjectWrapper> objects = new ArrayList<>();
 
     // Reference frame used by TLEs according to celestrak
     private Frame TEME;
@@ -259,7 +260,8 @@ public class DataManager {
                     } catch (JSONException ignore) {
                         id = "";
                     }
-                    objects.add(new ObjectWrapper(name, type, id));
+                    ObjectWrapper objW = new ObjectWrapper(name, type, id);
+                    objects.add(objW);
                     //objects.add(new ObjectWrapper("DUMMY", "PAYLOAD", "1959-007A"));
                 } else {
                     Log.w(TAG, "Ecc: " + newTLE.getE() + ", " + key);
@@ -283,6 +285,24 @@ public class DataManager {
         }
         ITRF = FramesFactory.getITRF(IERSConventions.IERS_2010, true);
         TEME = FramesFactory.getTEME();
+
+
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+        mainHandler.post(() -> {
+            config.getFavorites().observeForever(new Observer<HashSet<String>>() {
+                @Override
+                public void onChanged(HashSet<String> strings) {
+                    if (strings == null) return;
+                    config.getFavorites().removeObserver(this);
+                    for (int i = 0; i < objects.size(); i++) {
+                        if (strings.contains(objects.get(i).designation)) {
+                            objects.get(i).favorite = true;
+                        }
+                    }
+                }
+            });
+        });
+
     }
     void propagateTLEs() {
         if (tleItCount++ % TLE_SIM_COUNT == 0) {
@@ -343,5 +363,11 @@ public class DataManager {
     }
     void resetIteratorCount() {
         tleItCount = 0;
+    }
+    double getVelocity(int index) {
+        return currentCoordinates[index].getVelocity().getNorm();
+    }
+    double getEccentricity(int index) {
+        return propagators[index].getTLE().getE();
     }
 }

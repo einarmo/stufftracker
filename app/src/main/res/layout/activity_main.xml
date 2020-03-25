@@ -86,6 +86,13 @@
                     <ToggleButton android:id="@+id/show_debris"
                         android:checked="true"/>
                 </TableRow>
+                <TableRow>
+                    <Button
+                        android:layout_span="2"
+                        android:text="@string/clear_favorites"
+                        android:background="#FFCC4444"
+                        android:id="@+id/clear_favorites" />
+                </TableRow>
             </TableLayout>
 
         </LinearLayout>

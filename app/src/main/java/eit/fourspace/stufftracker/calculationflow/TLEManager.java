@@ -108,8 +108,16 @@ public class TLEManager {
                         double elevation = 90 - Math.toDegrees(Math.acos(obj.position.getZ() / obj.position.getNorm()));
                         double rawAzimuth = Math.toDegrees(Math.atan2(obj.position.getX(), obj.position.getY()));
                         double azimuth = (rawAzimuth > 0 ? rawAzimuth : 360 + rawAzimuth);
+                        double velocity = dataManager.getVelocity(i);
+                        GeodeticPoint point = earth.transform(positions[i], dataManager.ITRF, date);
+                        double eccentricity = dataManager.getEccentricity(i);
                         dataModel.setElevation(elevation);
                         dataModel.setAzimuth(azimuth);
+                        dataModel.setVelocity(velocity);
+                        dataModel.setEccentricity(eccentricity);
+                        dataModel.setAltitude(point.getAltitude());
+                        dataModel.setLatitude(Math.toDegrees(point.getLatitude()));
+                        dataModel.setLongitude(Math.toDegrees(point.getLongitude()));
                     }
                     //if (obj.position.getZ() > 0 && Math.abs(obj.position.getX()) < 100000 && Math.abs(obj.position.getY()) < 100000) {
                     //    Log.w(TAG, "OVERHEAD: " + obj.name + ", " + obj.position.toString());

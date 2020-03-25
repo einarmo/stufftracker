@@ -16,10 +16,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.Switch;
+import android.widget.TableLayout;
 import android.widget.TextView;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -61,6 +63,7 @@ public class CameraFragment extends Fragment {
 
     private RotationSensorManager sensorManager;
     private LocationManager locationManager;
+    private ConfigData configData;
 
     private Size screenSize;
 
@@ -112,16 +115,37 @@ public class CameraFragment extends Fragment {
         locationManager = new LocationManager(requireContext());
         ViewModelProvider provider = new ViewModelProvider(requireActivity());
         ObjectDataModel objectDataModel = provider.get(ObjectDataModel.class);
+        configData = new ViewModelProvider(requireActivity()).get(ConfigData.class);
         tleManager = new TLEManager(requireContext(), objectDataModel,
                 locationManager, provider.get(ConfigData.class));
 
         objectDataModel.getAzimuth().observeForever(value -> {
             if (popup == null || value == null) return;
-            ((TextView)popup.getContentView().findViewById(R.id.azimuth)).setText(String.format(Locale.ENGLISH,"%.4f", value));
+            ((TextView)popup.getContentView().findViewById(R.id.azimuth)).setText(String.format(Locale.ENGLISH,"%.4f\u00B0", value));
         });
         objectDataModel.getElevation().observeForever(value -> {
             if (popup == null || value == null) return;
-            ((TextView)popup.getContentView().findViewById(R.id.elevation)).setText(String.format(Locale.ENGLISH,"%.4f", value));
+            ((TextView)popup.getContentView().findViewById(R.id.elevation)).setText(String.format(Locale.ENGLISH,"%.4f\u00B0", value));
+        });
+        objectDataModel.getVelocity().observeForever(value -> {
+            if (popup == null || value == null) return;
+            ((TextView)popup.getContentView().findViewById(R.id.velocity)).setText(String.format(Locale.ENGLISH,"%.2fm/s", value));
+        });
+        objectDataModel.getLatitude().observeForever(value -> {
+            if (popup == null || value == null) return;
+            ((TextView)popup.getContentView().findViewById(R.id.latitude)).setText(String.format(Locale.ENGLISH,"%.4f\u00B0", value));
+        });
+        objectDataModel.getLongitude().observeForever(value -> {
+            if (popup == null || value == null) return;
+            ((TextView)popup.getContentView().findViewById(R.id.longitude)).setText(String.format(Locale.ENGLISH,"%.4f\u00B0", value));
+        });
+        objectDataModel.getAltitude().observeForever(value -> {
+            if (popup == null || value == null) return;
+            ((TextView)popup.getContentView().findViewById(R.id.altitude)).setText(String.format(Locale.ENGLISH,"%.2fm", value));
+        });
+        objectDataModel.getEccentricity().observeForever(value -> {
+            if (popup == null || value == null) return;
+            ((TextView)popup.getContentView().findViewById(R.id.eccentricity)).setText(String.format(Locale.ENGLISH,"%.4f", value));
         });
     }
 
@@ -133,7 +157,7 @@ public class CameraFragment extends Fragment {
         requireActivity().getWindowManager().getDefaultDisplay().getRealMetrics(dm);
         screenSize = new Size(dm.widthPixels, dm.heightPixels);
         View canvasView = view.findViewById(R.id.canvas_view);
-        itemRenderer = new ItemRenderer(requireContext(), tleManager, sensorManager, canvasView, new ViewModelProvider(requireActivity()).get(ConfigData.class));
+        itemRenderer = new ItemRenderer(requireContext(), tleManager, sensorManager, canvasView, configData);
         touchListener = new OverlayTouchListener(tleManager, this);
         canvasView.setOnTouchListener(touchListener);
         return view;
@@ -269,9 +293,7 @@ public class CameraFragment extends Fragment {
 
         if (popup == null) {
             content = inflater.inflate(R.layout.popup, null);
-            popup = new PopupWindow(
-                    content, (int)(screenSize.getWidth()*0.9), (int)(screenSize.getHeight()*0.4)
-            );
+            popup = new PopupWindow(content, (int)(screenSize.getWidth()*0.9), FrameLayout.LayoutParams.WRAP_CONTENT);
             popup.setFocusable(true);
         } else {
             content = popup.getContentView();
@@ -305,6 +327,11 @@ public class CameraFragment extends Fragment {
         favorite.setOnCheckedChangeListener((view, val) -> {
             if (selectedWrapper != wrapper) return;
             wrapper.favorite = val;
+            if (val) {
+                configData.addFavorite(wrapper.designation);
+            } else {
+                configData.removeFavorite(wrapper.designation);
+            }
         });
         ((TextView)content.findViewById(R.id.launch_year)).setText(wrapper.launchYear);
         ((TextView)content.findViewById(R.id.launch_number)).setText(wrapper.launchNumber);

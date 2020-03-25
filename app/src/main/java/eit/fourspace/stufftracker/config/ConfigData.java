@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -13,6 +14,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.HashSet;
+import java.util.List;
 
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -29,6 +32,7 @@ public class ConfigData extends AndroidViewModel {
     private final MutableLiveData<Boolean> showRocketBody = new MutableLiveData<>(true);
     private final MutableLiveData<Boolean> showDebris = new MutableLiveData<>(true);
     private final MutableLiveData<Integer> fileNo = new MutableLiveData<>(null);
+    private final MutableLiveData<HashSet<String>> favorites = new MutableLiveData<>(null);
     private static final String TAG = "CONFIG_DATA";
 
     public ConfigData(Application context) {
@@ -101,6 +105,20 @@ public class ConfigData extends AndroidViewModel {
                 } catch (JSONException e) {
                     fileNo.postValue(0);
                 }
+                try {
+                    JSONArray lFavorites = data.getJSONArray("favorites");
+                    HashSet<String> values = new HashSet<>();
+                    for (int i = 0; i < lFavorites.length(); i++) {
+                        String val = lFavorites.getString(i);
+                        if (val != null && !val.equals("")) {
+                            values.add(val);
+                        }
+                    }
+                    favorites.postValue(values);
+                    Log.w(TAG, "Loaded " + values.size() + " favorites");
+                } catch (JSONException e) {
+                    favorites.postValue(new HashSet<>());
+                }
             }
             ready.postValue(true);
             Log.w(TAG, "Finish load config");
@@ -113,6 +131,8 @@ public class ConfigData extends AndroidViewModel {
             data.put("showAll", lShowAll == null ? showAll.getValue() : lShowAll);
             data.put("trueNorth", lTrueNorth == null ? trueNorth.getValue() : lTrueNorth);
             data.put("fileNo", lFileNo == null ? fileNo.getValue() : lFileNo);
+            HashSet<String> lFavorites = favorites.getValue();
+            data.put("favorites", lFavorites == null ? new JSONArray() : new JSONArray(lFavorites));
             OutputStreamWriter writer = new OutputStreamWriter(context.openFileOutput("config.json", Context.MODE_PRIVATE));
             writer.write(data.toString());
             writer.flush();
@@ -181,5 +201,28 @@ public class ConfigData extends AndroidViewModel {
     }
     public LiveData<Integer> getFileNo() {
         return fileNo;
+    }
+    public LiveData<HashSet<String>> getFavorites() { return favorites; }
+
+    public void addFavorite(String nFavorite) {
+        if (favorites.getValue() == null) return;
+        if (favorites.getValue().add(nFavorite)) {
+            favorites.postValue(favorites.getValue());
+            AsyncTask.execute(() -> SaveData(context, null, null, null, null));
+        }
+    }
+
+    public void removeFavorite(String nFavorite) {
+        if (favorites.getValue() == null) return;
+        if (favorites.getValue().remove(nFavorite)) {
+            favorites.postValue(favorites.getValue());
+            AsyncTask.execute(() -> SaveData(context, null, null, null, null));
+        }
+    }
+    public void clearFavorites() {
+        if (favorites.getValue() == null || favorites.getValue().size() == 0) return;
+        favorites.getValue().clear();
+        favorites.postValue(favorites.getValue());
+        AsyncTask.execute(() -> SaveData(context, null, null, null, null));
     }
 }

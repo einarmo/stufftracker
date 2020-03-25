@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
         if (navigationView != null) {
             navigationView.setOnApplyWindowInsetsListener((v, insets) -> insets);
         }
-        new ConfigViewManager(configDataModel, findViewById(R.id.config_container));
+        new ConfigViewManager(configDataModel, dataModel, findViewById(R.id.config_container));
 
         container.setOnSystemUiVisibilityChangeListener(visibility -> {
             if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {

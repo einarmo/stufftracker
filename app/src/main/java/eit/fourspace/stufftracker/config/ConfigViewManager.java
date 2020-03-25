@@ -4,23 +4,28 @@ import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.AnimationDrawable;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.ToggleButton;
 
+import java.util.HashSet;
 import java.util.Locale;
 
 import androidx.lifecycle.Observer;
 import eit.fourspace.stufftracker.R;
+import eit.fourspace.stufftracker.calculationflow.DataManager;
+import eit.fourspace.stufftracker.calculationflow.ObjectDataModel;
 
 public class ConfigViewManager {
     private ConfigData dataModel;
     private LinearLayout container;
     private ToggleButton showAll, trueNorth, showSatellites, showRocketBodies, showDebris;
+    private Button clearFavorites;
     private EditText cameraRatio, filterString;
-    public ConfigViewManager(ConfigData dataModel, LinearLayout container) {
+    public ConfigViewManager(ConfigData dataModel, ObjectDataModel objectDataModel, LinearLayout container) {
         this.dataModel = dataModel;
         this.container = container;
 
@@ -31,6 +36,7 @@ public class ConfigViewManager {
         showRocketBodies = container.findViewById(R.id.show_rocket_body);
         showDebris = container.findViewById(R.id.show_debris);
         filterString = container.findViewById(R.id.filter_text);
+        clearFavorites = container.findViewById(R.id.clear_favorites);
 
         showAll.setOnCheckedChangeListener((view, active) -> {
             if (dataModel != null) {
@@ -55,6 +61,19 @@ public class ConfigViewManager {
         showDebris.setOnCheckedChangeListener((view, active) -> {
             if (dataModel != null) {
                 dataModel.setShowDebris(active);
+            }
+        });
+        clearFavorites.setOnClickListener(ignore -> {
+            if (dataModel != null && objectDataModel != null) {
+                HashSet<String> favorites = dataModel.getFavorites().getValue();
+                DataManager dataManager = objectDataModel.getDataManager().getValue();
+                if (favorites == null || dataManager == null) return;
+                for (int i = 0; i < dataManager.objects.size(); i++) {
+                    if (dataManager.objects.get(i).favorite) {
+                        dataManager.objects.get(i).favorite = false;
+                    }
+                }
+                dataModel.clearFavorites();
             }
         });
         cameraRatio.addTextChangedListener(new TextWatcher() {
@@ -112,6 +131,10 @@ public class ConfigViewManager {
                 cameraRatio.setText(String.format(Locale.ENGLISH,"%.2f", aDouble));
                 dataModel.getCameraRatio().removeObserver(this);
             }
+        });
+        dataModel.getFavorites().observeForever(set -> {
+            if (set == null) return;
+            clearFavorites.setEnabled(set.size() > 0);
         });
     }
 }
