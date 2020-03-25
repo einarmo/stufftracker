@@ -26,6 +26,7 @@ public class ObjectWrapper {
     public boolean baseVisible;
     public boolean selected;
     public boolean invalid;
+    public boolean favorite;
 
     ObjectWrapper(String name, String type, String designation) {
         this.name = name;

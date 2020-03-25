@@ -3,7 +3,6 @@ package eit.fourspace.stufftracker.calculationflow;
 import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.util.DisplayMetrics;
 import android.view.Surface;
 import android.view.View;
 

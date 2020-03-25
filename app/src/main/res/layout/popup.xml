@@ -81,8 +81,42 @@
                 android:paddingEnd="0dp"
                 android:id="@+id/launch_part"
                 android:textColor="@android:color/white"
-                android:text="@string/launch_part"
                 android:textSize="15sp" />
+        </TableRow>
+        <TableRow>
+            <TextView
+                android:id="@+id/elevation_desc"
+                android:text="@string/elevation_desc"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+            <TextView
+                android:paddingStart="10dp"
+                android:paddingEnd="0dp"
+                android:id="@+id/elevation"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+        </TableRow>
+        <TableRow>
+            <TextView
+                android:id="@+id/azimuth_desc"
+                android:text="@string/azimuth_desc"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+            <TextView
+                android:paddingStart="10dp"
+                android:paddingEnd="0dp"
+                android:id="@+id/azimuth"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+        </TableRow>
+        <TableRow>
+            <TextView
+                android:id="@+id/favorite_desc"
+                android:text="@string/favorite_desc"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+            <Switch
+                android:id="@+id/favorite" />
         </TableRow>
     </TableLayout>
 

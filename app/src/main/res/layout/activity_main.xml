@@ -40,15 +40,15 @@
                 android:paddingTop="5dp"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
-                android:stretchColumns="1">
+                android:stretchColumns="0">
 
                 <TableRow>
                     <TextView android:text="@string/show_all" />
-                    <Switch android:id="@id/show_all" />
+                    <ToggleButton android:id="@id/show_all" />
                 </TableRow>
                 <TableRow>
                     <TextView android:text="@string/true_north" />
-                    <Switch android:id="@+id/true_north" android:checked="true" />
+                    <ToggleButton android:id="@+id/true_north" android:checked="true" />
                 </TableRow>
                 <TableRow>
                     <TextView android:text="@string/camera_ratio"
@@ -73,17 +73,17 @@
                 </TableRow>
                 <TableRow>
                     <TextView android:text="@string/show_satellite" />
-                    <Switch android:id="@+id/show_satellite"
+                    <ToggleButton android:id="@+id/show_satellite"
                         android:checked="true" />
                 </TableRow>
                 <TableRow>
                     <TextView android:text="@string/show_rocket_body" />
-                    <Switch android:id="@+id/show_rocket_body"
+                    <ToggleButton android:id="@+id/show_rocket_body"
                         android:checked="true" />
                 </TableRow>
                 <TableRow>
                     <TextView android:text="@string/show_debris" />
-                    <Switch android:id="@+id/show_debris"
+                    <ToggleButton android:id="@+id/show_debris"
                         android:checked="true"/>
                 </TableRow>
             </TableLayout>

@@ -28,6 +28,7 @@ public class TLEManager {
     private Handler tleWorker;
 
     private static final String TAG = "TLEManager";
+    private ObjectDataModel dataModel;
     private DataManager dataManager;
     private LocationManager locManager;
     private final double[] locationVector = new double[3];
@@ -50,7 +51,7 @@ public class TLEManager {
             if (!paused) {
                 tleWorker.postDelayed(this, 200);
             }
-            if (dataManager.initialized) {
+            if (dataManager != null && dataManager.initialized) {
                 if (earth == null) {
                     earth = ReferenceEllipsoid.getWgs84(dataManager.ITRF);
                 }
@@ -99,9 +100,17 @@ public class TLEManager {
                         }
                         obj.filtered = filter;
                     }
+                    obj.filtered &= !obj.selected && !obj.favorite;
                     if (obj.filtered) continue;
                     obj.position = tf.transformPosition(positions[i]);
-                    obj.baseVisible = showAll || obj.objectClass == ObjectClass.STATION || obj.position.getZ() > 0;
+                    obj.baseVisible = obj.favorite || obj.selected || showAll || obj.objectClass == ObjectClass.STATION || obj.position.getZ() > 0;
+                    if (obj.selected) {
+                        double elevation = 90 - Math.toDegrees(Math.acos(obj.position.getZ() / obj.position.getNorm()));
+                        double rawAzimuth = Math.toDegrees(Math.atan2(obj.position.getX(), obj.position.getY()));
+                        double azimuth = (rawAzimuth > 0 ? rawAzimuth : 360 + rawAzimuth);
+                        dataModel.setElevation(elevation);
+                        dataModel.setAzimuth(azimuth);
+                    }
                     //if (obj.position.getZ() > 0 && Math.abs(obj.position.getX()) < 100000 && Math.abs(obj.position.getY()) < 100000) {
                     //    Log.w(TAG, "OVERHEAD: " + obj.name + ", " + obj.position.toString());
                     //}
@@ -124,9 +133,10 @@ public class TLEManager {
         }
     };
 
-    public TLEManager(Context context, DataManager dataManager, LocationManager locManager, ConfigData configDataModel) {
-        this.dataManager = dataManager;
+    public TLEManager(Context context, ObjectDataModel dataModel, LocationManager locManager, ConfigData configDataModel) {
+        this.dataModel = dataModel;
         this.locManager = locManager;
+        this.dataManager = dataModel.getDataManager().getValue();
         HandlerThread tleWorkerThread = new HandlerThread("TLEWorker", 5);
         tleWorkerThread.start();
         tleWorker = new Handler(tleWorkerThread.getLooper());

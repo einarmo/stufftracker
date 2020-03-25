@@ -9,14 +9,12 @@ import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.RequestFuture;
 import com.android.volley.toolbox.Volley;
 
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
 import org.hipparchus.util.FastMath;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.orekit.frames.Frame;
@@ -134,7 +132,7 @@ public class DataManager {
             }
         } else if (newObjects != null){
             Iterator<String> keys = newObjects.keys();
-            int maxFileNo = 0;
+            int maxFileNo = fileNo;
             while (keys.hasNext()) {
                 String key = keys.next();
                 JSONObject newObj;
@@ -157,7 +155,9 @@ public class DataManager {
                     Log.w(TAG, "Failed to parse TLE data: " + key);
                 }
             }
-            config.setFileNo(maxFileNo);
+            if (maxFileNo != fileNo) {
+                config.setFileNo(maxFileNo);
+            }
         }
         AsyncTask.execute(() -> dumpToFile(rawData.toString(), context));
         Log.w(TAG, "Begin TLE Init");
@@ -334,7 +334,6 @@ public class DataManager {
     }
 
     synchronized void refreshPositions() {
-
         for (int i = 0; i < currentCoordinates.length; i++) {
             currentVectors[i] = currentCoordinates[i].getPosition();
         }

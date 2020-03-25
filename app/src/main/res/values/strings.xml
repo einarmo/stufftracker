@@ -13,4 +13,7 @@
     <string name="show_satellite">Show satellites</string>
     <string name="show_rocket_body">Show rocket bodies</string>
     <string name="show_debris">Show debris</string>
+    <string name="elevation_desc">Elevation:</string>
+    <string name="azimuth_desc">Azimuth:</string>
+    <string name="favorite_desc">Favorite:</string>
 </resources>

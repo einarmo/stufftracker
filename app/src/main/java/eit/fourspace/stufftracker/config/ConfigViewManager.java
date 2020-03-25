@@ -8,6 +8,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Switch;
+import android.widget.ToggleButton;
 
 import java.util.Locale;
 
@@ -17,7 +18,7 @@ import eit.fourspace.stufftracker.R;
 public class ConfigViewManager {
     private ConfigData dataModel;
     private LinearLayout container;
-    private Switch showAll, trueNorth, showSatellites, showRocketBodies, showDebris;
+    private ToggleButton showAll, trueNorth, showSatellites, showRocketBodies, showDebris;
     private EditText cameraRatio, filterString;
     public ConfigViewManager(ConfigData dataModel, LinearLayout container) {
         this.dataModel = dataModel;

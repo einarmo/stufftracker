@@ -19,7 +19,7 @@ import static eit.fourspace.stufftracker.calculationflow.ObjectClass.ROCKET_BODY
 import static eit.fourspace.stufftracker.calculationflow.ObjectClass.STATION;
 
 public class OverlayDrawable extends Drawable {
-    private Paint redPaint, greenPaint, greyPaint, yellowPaint, bluePaint;
+    private Paint redPaint, greenPaint, greyPaint, yellowPaint, bluePaint, purplePaint;
     private ItemRenderer renderer;
     public static final String TAG = "OverlayDrawable";
     private static final int BASE_RADIUS = 15;
@@ -35,7 +35,11 @@ public class OverlayDrawable extends Drawable {
         yellowPaint = new Paint();
         yellowPaint.setARGB(125, 175, 175, 0);
         bluePaint = new Paint();
+        bluePaint.setStrokeWidth(4);
         bluePaint.setARGB(125, 0, 0, 175);
+        purplePaint = new Paint();
+        purplePaint.setARGB(125, 139, 0, 139);
+        purplePaint.setStrokeWidth(6);
     }
 
     @Override
@@ -63,19 +67,25 @@ public class OverlayDrawable extends Drawable {
                     paint = greyPaint;
                     break;
             }
-            canvas.drawCircle((float)obj.projection.getX(), (float)obj.projection.getY(), radius, paint);
+            float posx = (float)obj.projection.getX();
+            float posy = (float)obj.projection.getY();
+            canvas.drawCircle(posx, posy, radius, paint);
             if (obj.selected) {
                 Paint roundPaint = new Paint(paint);
                 roundPaint.setStyle(Paint.Style.STROKE);
                 roundPaint.setStrokeWidth(4);
-                canvas.drawCircle((float)obj.projection.getX(), (float)obj.projection.getY(), radius+6, roundPaint);
+                canvas.drawCircle(posx, posy, radius+6, roundPaint);
+            }
+            if (obj.favorite) {
+                Paint linePaint = purplePaint;
+                canvas.drawLine(posx - radius, posy - radius, posx + radius, posy + radius, linePaint);
+                canvas.drawLine(posx - radius, posy + radius, posx + radius, posy - radius, linePaint);
             }
         }
         LinkedList<OrbitWrapper> orbits = renderer.getOrbits();
         for (OrbitWrapper orbit : orbits) {
             if (!orbit.initialized || !orbit.rendered) continue;
             Paint paint = bluePaint;
-            paint.setStrokeWidth(4);
             for (int j = 0; j < OrbitWrapper.NUM_POINTS; j++) {
                 if (orbit.rotatedPositions[j].getZ() >= 0 || orbit.rotatedPositions[(j + 1) % OrbitWrapper.NUM_POINTS].getZ() >= 0) continue;
                 canvas.drawLine((float)orbit.projections[j].getX(),

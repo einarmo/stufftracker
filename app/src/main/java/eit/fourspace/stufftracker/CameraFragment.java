@@ -19,12 +19,14 @@ import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
 import net.steamcrafted.materialiconlib.MaterialIconView;
 
+import java.util.Locale;
 import java.util.concurrent.Executor;
 
 import androidx.annotation.NonNull;
@@ -40,6 +42,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+import eit.fourspace.stufftracker.calculationflow.DataManager;
 import eit.fourspace.stufftracker.calculationflow.ItemRenderer;
 import eit.fourspace.stufftracker.calculationflow.LocationManager;
 import eit.fourspace.stufftracker.calculationflow.ObjectDataModel;
@@ -107,8 +110,19 @@ public class CameraFragment extends Fragment {
         mainExecutor = ContextCompat.getMainExecutor(requireContext());
         sensorManager = new RotationSensorManager(requireContext());
         locationManager = new LocationManager(requireContext());
-        tleManager = new TLEManager(requireContext(), new ViewModelProvider(requireActivity()).get(ObjectDataModel.class).getDataManager().getValue(),
-                locationManager, new ViewModelProvider(requireActivity()).get(ConfigData.class));
+        ViewModelProvider provider = new ViewModelProvider(requireActivity());
+        ObjectDataModel objectDataModel = provider.get(ObjectDataModel.class);
+        tleManager = new TLEManager(requireContext(), objectDataModel,
+                locationManager, provider.get(ConfigData.class));
+
+        objectDataModel.getAzimuth().observeForever(value -> {
+            if (popup == null || value == null) return;
+            ((TextView)popup.getContentView().findViewById(R.id.azimuth)).setText(String.format(Locale.ENGLISH,"%.4f", value));
+        });
+        objectDataModel.getElevation().observeForever(value -> {
+            if (popup == null || value == null) return;
+            ((TextView)popup.getContentView().findViewById(R.id.elevation)).setText(String.format(Locale.ENGLISH,"%.4f", value));
+        });
     }
 
     @Override
@@ -270,6 +284,10 @@ public class CameraFragment extends Fragment {
         closeButton.setClickable(true);
 
         selectedWrapper = wrapper;
+
+        Switch favorite = content.findViewById(R.id.favorite);
+        favorite.setChecked(wrapper.favorite);
+
         tleManager.addOrbit(wrapper);
         selectedWrapper.selected = true;
 
@@ -283,6 +301,10 @@ public class CameraFragment extends Fragment {
             tleManager.removeOrbit(wrapper);
             listener.visible = false;
             wrapper.selected = false;
+        });
+        favorite.setOnCheckedChangeListener((view, val) -> {
+            if (selectedWrapper != wrapper) return;
+            wrapper.favorite = val;
         });
         ((TextView)content.findViewById(R.id.launch_year)).setText(wrapper.launchYear);
         ((TextView)content.findViewById(R.id.launch_number)).setText(wrapper.launchNumber);
