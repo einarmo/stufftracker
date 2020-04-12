@@ -14,7 +14,7 @@ import eit.fourspace.stufftracker.calculationflow.TLEManager;
 
 public class OverlayTouchListener implements View.OnTouchListener {
     private final TLEManager manager;
-    private static int TOUCH_LOCALITY = 40;
+    private static final int TOUCH_LOCALITY = 40;
     boolean visible = false;
     private static final String TAG = "OverlayTouchListener";
     private final CameraFragment root;
@@ -25,8 +25,9 @@ public class OverlayTouchListener implements View.OnTouchListener {
     }
     @Override
     public boolean onTouch(View v, MotionEvent event) {
+        v.performClick();
         LinkedList<ObjectWrapper> hits = new LinkedList<>();
-        if (event.getActionMasked() != MotionEvent.ACTION_UP) return true;
+        if (event.getAction() != MotionEvent.ACTION_UP) return true;
         //if (visible) {
         //    root.dismissPopup(this);
         //}
@@ -41,14 +42,12 @@ public class OverlayTouchListener implements View.OnTouchListener {
         if (hits.size() > 0) {
             Collections.sort(hits, (o1, o2) -> (int)(o1.projection.getNorm() - o2.projection.getNorm()));
             ObjectWrapper hit = hits.getFirst();
-            Log.w(TAG, hit.name);
             root.showPopup(hit, this);
+            Log.i(TAG, "View popup for: " + hit.name);
             visible = true;
         } else {
-            Log.w(TAG, "No hits: " + x + ", " + y);
             root.dismissPopup(this);
         }
-        v.performClick();
         return true;
     }
 }

@@ -3,6 +3,7 @@ package eit.fourspace.stufftracker.calculationflow;
 import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 import android.view.Surface;
 import android.view.View;
 
@@ -148,6 +149,7 @@ public class ItemRenderer {
 
     public void onResume() {
         paused = false;
+        Log.i(TAG, "Start ItemRenderer");
         renderWorker.postDelayed(renderRunnable,1000);
     }
 

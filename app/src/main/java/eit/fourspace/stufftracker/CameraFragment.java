@@ -1,4 +1,5 @@
 package eit.fourspace.stufftracker;
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Context;
 import android.content.res.Configuration;
@@ -17,11 +18,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.Switch;
-import android.widget.TableLayout;
 import android.widget.TextView;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -44,7 +43,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
-import eit.fourspace.stufftracker.calculationflow.DataManager;
 import eit.fourspace.stufftracker.calculationflow.ItemRenderer;
 import eit.fourspace.stufftracker.calculationflow.LocationManager;
 import eit.fourspace.stufftracker.calculationflow.ObjectDataModel;
@@ -56,7 +54,6 @@ import eit.fourspace.stufftracker.config.ConfigData;
 
 public class CameraFragment extends Fragment {
     private PreviewView cameraView;
-    private OverlayDrawable canvas;
     private ProcessCameraProvider provider;
     private TLEManager tleManager;
     private ItemRenderer itemRenderer;
@@ -166,8 +163,13 @@ public class CameraFragment extends Fragment {
     @Override
     public void onConfigurationChanged(@NonNull Configuration config) {
         super.onConfigurationChanged(config);
-        Display display = ((WindowManager) requireContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        itemRenderer.orientation = display.getRotation();
+        WindowManager manager = (WindowManager) requireContext().getSystemService(Context.WINDOW_SERVICE);
+
+        if (manager != null) {
+            Display display = manager.getDefaultDisplay();
+            itemRenderer.orientation = display.getRotation();
+        }
+
         dismissPopup(touchListener);
     }
 
@@ -177,7 +179,7 @@ public class CameraFragment extends Fragment {
 
         ConstraintLayout container = (ConstraintLayout)view;
 
-        canvas = new OverlayDrawable(itemRenderer, configData);
+        OverlayDrawable canvas = new OverlayDrawable(itemRenderer, configData);
         ImageView image = container.findViewById(R.id.canvas_view);
         image.setImageDrawable(canvas);
 
@@ -185,9 +187,12 @@ public class CameraFragment extends Fragment {
         getCameraAngles();
         cameraView.post(this::startCamera);
 
-        Display display = ((WindowManager) requireContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        itemRenderer.orientation = display.getRotation();
-        Log.w(TAG, "" + display.getRotation());
+        WindowManager manager = (WindowManager) requireContext().getSystemService(Context.WINDOW_SERVICE);
+        if (manager != null) {
+            Display display = manager.getDefaultDisplay();
+            itemRenderer.orientation = display.getRotation();
+            Log.w(TAG, "" + display.getRotation());
+        }
     }
 
     private void startCamera() {
@@ -205,7 +210,6 @@ public class CameraFragment extends Fragment {
                     .setTargetAspectRatio(screenAspectRatio)
                     .setTargetRotation(rotation)
                     .build();
-            preview.setSurfaceProvider(cameraView.getPreviewSurfaceProvider());
 
             try {
                 provider = providerFuture.get();
@@ -216,6 +220,7 @@ public class CameraFragment extends Fragment {
             provider.unbindAll();
             Camera camera = provider.bindToLifecycle(self, cameraSelector, preview);
             camera.getCameraControl().setLinearZoom(0);
+            preview.setSurfaceProvider(cameraView.createSurfaceProvider(camera.getCameraInfo()));
             getCameraAngles();
 
         }, mainExecutor);
@@ -276,6 +281,7 @@ public class CameraFragment extends Fragment {
         }
     }
 
+    @SuppressLint("InflateParams")
     synchronized void showPopup(ObjectWrapper wrapper, OverlayTouchListener listener) {
         LayoutInflater inflater = (LayoutInflater)requireContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         if (inflater == null) {
@@ -295,6 +301,7 @@ public class CameraFragment extends Fragment {
             content = inflater.inflate(R.layout.popup, null);
             popup = new PopupWindow(content, (int)(screenSize.getWidth()*0.9), FrameLayout.LayoutParams.WRAP_CONTENT);
             popup.setFocusable(true);
+            popup.setTouchable(true);
         } else {
             content = popup.getContentView();
         }

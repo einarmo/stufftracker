@@ -9,12 +9,12 @@ public class ObjectWrapper {
     public final String designation;
     public ObjectClass objectClass;
     // Relative position in Magnetic/True north Topocentric Frame
-    public Vector3D position;
+    Vector3D position;
     // Relative position in android rotated frame
     public Vector3D rotatedPosition;
 
     public Vector2D projection;
-    public int size; // Size on screen, based on distance (don't know if we will be using this).
+    // public int size; // Size on screen, based on distance (don't know if we will be using this).
 
     // YYYY-NNN[part] launch number NNN of year, with a letter to designate the last part.
     public final String launchYear;
@@ -23,9 +23,9 @@ public class ObjectWrapper {
 
     public boolean visible;
     public boolean filtered;
-    public boolean baseVisible;
+    boolean baseVisible;
     public boolean selected;
-    public boolean invalid;
+    boolean invalid;
     public boolean favorite;
 
     ObjectWrapper(String name, String type, String designation) {

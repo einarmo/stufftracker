@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,15 +15,12 @@ import android.widget.Toast;
 
 import org.orekit.data.DataProvidersManager;
 import org.orekit.data.DirectoryCrawler;
-import org.orekit.data.ZipJarCrawler;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -42,7 +38,7 @@ public class PermissionsFragment extends Fragment {
     private static final String[] REQUIRED_PERMS = {Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.INTERNET, Manifest.permission.ACCESS_NETWORK_STATE};
 
-    boolean oneLoaded = false;
+    private boolean oneLoaded = false;
 
     private static final String TAG = "Permissions";
 
@@ -162,9 +158,7 @@ public class PermissionsFragment extends Fragment {
     }
 
     private void exitOnDelay() {
-        new Handler().postDelayed(() -> {
-            System.exit(1);
-        }, 2000);
+        new Handler().postDelayed(() -> System.exit(1), 2000);
     }
 
     @Override

@@ -5,7 +5,6 @@ import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 
 import org.hipparchus.geometry.euclidean.twod.Vector2D;
 import org.hipparchus.util.FastMath;
@@ -93,7 +92,7 @@ public class OverlayDrawable extends Drawable {
                 canvas.drawLine(xStart, yStart, xEnd, yEnd, linePaint);
                 continue;
             }
-            if (!obj.visible || obj.filtered) continue;;
+            if (!obj.visible || obj.filtered) continue;
             canvas.drawCircle(posx, posy, radius, paint);
             if (obj.selected) {
                 Paint roundPaint = new Paint(paint);

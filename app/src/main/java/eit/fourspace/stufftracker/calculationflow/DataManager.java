@@ -87,18 +87,16 @@ public class DataManager {
             }
         }
         Handler mainHandler = new Handler(Looper.getMainLooper());
-        mainHandler.post(() -> {
-            config.getFileNo().observeForever(
-                    new Observer<Integer>() {
-                        @Override
-                        public void onChanged(Integer integer) {
-                            if (integer == null) return;
-                            config.getFileNo().removeObserver(this);
-                            AsyncTask.execute(() -> finalizeTLELoad(context, integer));
-                        }
+        mainHandler.post(() -> config.getFileNo().observeForever(
+                new Observer<Integer>() {
+                    @Override
+                    public void onChanged(Integer integer) {
+                        if (integer == null) return;
+                        config.getFileNo().removeObserver(this);
+                        AsyncTask.execute(() -> finalizeTLELoad(context, integer));
                     }
-            );
-        });
+                }
+        ));
     }
     private void finalizeTLELoad(Context context, int fileNo) {
         JSONObject newObjects = retrieveTLEByFileNo(context, fileNo);
@@ -288,20 +286,18 @@ public class DataManager {
 
 
         Handler mainHandler = new Handler(Looper.getMainLooper());
-        mainHandler.post(() -> {
-            config.getFavorites().observeForever(new Observer<HashSet<String>>() {
-                @Override
-                public void onChanged(HashSet<String> strings) {
-                    if (strings == null) return;
-                    config.getFavorites().removeObserver(this);
-                    for (int i = 0; i < objects.size(); i++) {
-                        if (strings.contains(objects.get(i).designation)) {
-                            objects.get(i).favorite = true;
-                        }
+        mainHandler.post(() -> config.getFavorites().observeForever(new Observer<HashSet<String>>() {
+            @Override
+            public void onChanged(HashSet<String> strings) {
+                if (strings == null) return;
+                config.getFavorites().removeObserver(this);
+                for (int i = 0; i < objects.size(); i++) {
+                    if (strings.contains(objects.get(i).designation)) {
+                        objects.get(i).favorite = true;
                     }
                 }
-            });
-        });
+            }
+        }));
 
     }
     void propagateTLEs() {

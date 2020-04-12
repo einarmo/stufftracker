@@ -181,12 +181,13 @@ public class TLEManager {
         paused = false;
         tleWorker.postDelayed(tleRunnable,1000);
         dataManager.resetIteratorCount();
+        Log.i(TAG, "Start TLEManager");
     }
 
     public ArrayList<ObjectWrapper> getObjects() {
         return dataManager.objects;
     }
-    public LinkedList<OrbitWrapper> getOrbits() { return orbits; }
+    LinkedList<OrbitWrapper> getOrbits() { return orbits; }
     public void removeOrbit(ObjectWrapper wrapper) {
         OrbitWrapper toRemove = null;
         for (int i = 0; i < orbits.size(); i++) {
